@@ -1,101 +1,418 @@
-date,store,item,category,quantity,unit,price
-2024-01-20,Target,Large Eggs,Protein,2,dozen,3.49
-2024-01-20,Target,Greek Yogurt,Dairy,2,32 oz,5.49
-2024-01-20,Target,Cheddar Cheese,Dairy,1,16 oz,4.49
-2024-01-20,Target,Butter,Dairy,1,1 lb,3.99
-2024-01-20,Target,Sour Cream,Dairy,1,16 oz,2.49
-2024-01-27,Walmart,Ground Beef,Meat,2,lbs,5.99
-2024-01-27,Walmart,Salmon Fillet,Meat,1,lbs,11.99
-2024-01-27,Walmart,Pork Chops,Meat,1,lbs,4.99
-2024-01-27,Walmart,Bacon,Meat,2,16 oz,6.49
-2024-01-27,Walmart,Bananas,Produce,3,lbs,0.69
-2024-02-03,Target,Apples,Produce,2,lbs,1.99
-2024-02-03,Target,Avocados,Produce,1,pack,4.99
-2024-02-03,Target,Broccoli,Produce,2,lbs,1.89
-2024-02-03,Target,Onions,Produce,1,3 lb bag,2.99
-2024-02-03,Target,Garlic,Produce,1,pack,1.49
-2024-02-10,Walmart,Strawberries,Produce,2,1 lb,3.99
-2024-02-10,Walmart,Blueberries,Produce,1,pint,3.49
-2024-02-10,Walmart,Carrots,Produce,1,2 lbs,1.79
-2024-02-10,Walmart,Potatoes,Produce,1,5 lbs,4.49
-2024-02-10,Walmart,Bell Peppers,Produce,1,3 pack,3.99
-2024-02-17,Costco,Paper Towels,Household,1,12 rolls,14.99
-2024-02-17,Costco,Toilet Paper,Household,1,30 rolls,19.99
-2024-02-17,Costco,Trash Bags,Household,1,90 count,15.49
-2024-02-17,Costco,Dish Soap,Household,1,80 oz,9.29
-2024-02-17,Costco,Aluminum Foil,Household,1,200 sq ft,11.49
-2024-02-24,Target,White Rice,Grains,1,5 lbs,6.99
-2024-02-24,Target,Oats,Grains,1,32 oz,3.49
-2024-02-24,Target,Pasta,Grains,3,16 oz,1.49
-2024-02-24,Target,Quinoa,Grains,1,16 oz,4.29
-2024-02-24,Target,Cereal,Grains,2,box,4.29
-2024-03-02,Walmart,Olive Oil,Pantry,1,16 oz,8.99
-2024-03-02,Walmart,Peanut Butter,Pantry,1,16 oz,2.99
-2024-03-02,Walmart,Honey,Pantry,1,12 oz,4.49
-2024-03-02,Walmart,Canned Tuna,Pantry,4,5 oz,1.29
-2024-03-02,Walmart,Black Beans,Pantry,6,15 oz,0.99
-2024-03-09,Target,Fabric Softener,Laundry,1,60 oz,6.69
-2024-03-09,Target,Stain Remover,Laundry,1,22 oz,4.29
-2024-03-09,Target,Bleach,Laundry,1,Gallon,4.49
-2024-03-09,Target,Toilet Bowl Cleaner,Household,2,24 oz,2.79
-2024-03-09,Target,Clorox Wipes,Household,1,3 pack,6.49
-2024-03-16,Walmart,Shampoo,Personal Care,1,16 oz,5.99
-2024-03-16,Walmart,Conditioner,Personal Care,1,16 oz,5.99
-2024-03-16,Walmart,Body Wash,Personal Care,1,18 oz,4.99
-2024-03-16,Walmart,Toothpaste,Personal Care,1,2 pack,6.49
-2024-03-16,Walmart,Toothbrush,Personal Care,1,2 pack,3.99
-2024-03-23,Target,Potato Chips,Snacks,2,bag,3.99
-2024-03-23,Target,Crackers,Snacks,1,box,3.49
-2024-03-23,Target,Chocolate Bar,Snacks,3,each,1.89
-2024-03-23,Target,Sparkling Water,Snacks,2,12 pack,5.49
-2024-03-23,Target,Juice,Snacks,1,64 oz,3.29
-2024-03-30,Costco,Chicken Breast,Meat,1,10 lbs,29.99
-2024-03-30,Costco,Ground Beef,Meat,1,6 lbs,24.99
-2024-03-30,Costco,Salmon Fillet,Meat,1,3 lbs,32.99
-2024-03-30,Costco,Mixed Nuts,Snacks,1,40 oz,14.99
-2024-03-30,Costco,Granola Bars,Snacks,1,60 count,12.49
-2024-04-06,Target,Tortillas,Grains,1,pack,2.99
-2024-04-06,Target,Bagels,Grains,1,pack,4.29
-2024-04-06,Target,Flour,Grains,1,5 lbs,3.49
-2024-04-06,Target,Sugar,Pantry,1,4 lbs,3.19
-2024-04-06,Target,Coffee Beans,Pantry,1,12 oz,9.99
-2024-04-13,Walmart,Croissants,Bakery,1,4 pack,4.49
-2024-04-13,Walmart,Muffins,Bakery,1,4 pack,4.99
-2024-04-13,Walmart,Cookies,Bakery,1,pack,3.99
-2024-04-13,Walmart,Tomato Sauce,Pantry,3,15 oz,1.19
-2024-04-13,Walmart,Ketchup,Pantry,1,20 oz,2.79
-2024-04-20,Target,Frozen Pizza,Frozen,2,each,6.99
-2024-04-20,Target,Ice Cream,Frozen,1,pint,4.99
-2024-04-20,Target,Frozen Peas,Frozen,1,16 oz,1.49
-2024-04-20,Target,Frozen Waffles,Frozen,1,10 count,2.99
-2024-04-20,Target,Frozen Berries,Frozen,1,16 oz,4.49
-2024-04-27,Walmart,Hand Soap,Personal Care,2,11 oz,2.49
-2024-04-27,Walmart,Deodorant,Personal Care,1,stick,4.29
-2024-04-27,Walmart,Lotion,Personal Care,1,12 oz,6.99
-2024-04-27,Walmart,Sponges,Household,1,4 pack,2.99
-2024-04-27,Walmart,Ziploc Bags,Household,1,50 count,3.99
-2024-05-04,Target,Cottage Cheese,Dairy,1,16 oz,2.99
-2024-05-04,Target,Cream Cheese,Dairy,1,8 oz,2.79
-2024-05-04,Target,Heavy Cream,Dairy,1,16 oz,3.49
-2024-05-04,Target,Almond Milk,Dairy,1,0.5 Gallon,3.79
-2024-05-04,Target,Mozzarella,Dairy,1,8 oz,3.29
-2024-05-11,Walmart,Turkey Slices,Meat,1,1 lb,7.99
-2024-05-11,Walmart,Sausage Links,Meat,1,16 oz,4.29
-2024-05-11,Walmart,Shrimp,Meat,1,1 lb,9.99
-2024-05-11,Walmart,Ribeye Steak,Meat,2,lbs,14.99
-2024-05-11,Walmart,Lemons,Produce,3,lbs,2.19
-2024-05-18,Target,Lettuce,Produce,1,head,1.99
-2024-05-18,Target,Tea Bags,Pantry,1,20 count,3.29
-2024-05-18,Target,Salt,Pantry,1,26 oz,1.09
-2024-05-18,Target,Black Pepper,Pantry,1,4 oz,3.49
-2024-05-18,Target,Pretzels,Snacks,1,bag,2.99
-2024-05-25,Walmart,All-Purpose Cleaner,Household,1,32 oz,3.79
-2024-05-25,Walmart,Tissues,Household,1,3 pack,4.99
-2024-05-25,Walmart,Face Wash,Personal Care,1,8 oz,7.49
-2024-05-25,Walmart,Mouthwash,Personal Care,1,32 oz,5.49
-2024-05-25,Walmart,Floss,Personal Care,2,pack,2.99
-2024-06-01,Costco,Whole Milk,Dairy,2,Gallon,4.49
-2024-06-01,Costco,Large Eggs,Protein,1,5 dozen,8.99
-2024-06-01,Costco,Butter,Dairy,1,4 lbs,11.99
-2024-06-01,Costco,Maple Syrup,Pantry,1,32 oz,12.49
-2024-06-01,Costco,Sourdough Bread,Grains,2,loaf,4.99
+date,store,item,category,quantity,price
+2026-01-03,Costco,Paper Towels,Household,1,9.23
+2026-01-03,Costco,Cereal,Pantry,1,5.12
+2026-01-03,Costco,Chicken Breast,Meat & seafood,2,9.30
+2026-01-03,Costco,Cheddar Cheese,Dairy & eggs,2,6.44
+2026-01-03,Costco,Avocados,Produce,1,4.75
+2026-01-03,Costco,Baby Spinach,Produce,2,4.04
+2026-01-05,Costco,Coffee Beans,Pantry,2,13.59
+2026-01-05,Costco,Bagels,Bakery,1,4.00
+2026-01-05,Costco,Sourdough Bread,Bakery,1,4.46
+2026-01-05,Costco,Whole Milk,Dairy & eggs,1,3.95
+2026-01-05,Costco,Apples,Produce,1,4.83
+2026-01-09,Whole Foods,Frozen Pizza,Frozen,1,5.62
+2026-01-09,Whole Foods,Frozen Berries,Frozen,1,6.99
+2026-01-09,Whole Foods,Dark Chocolate,Snacks,1,3.70
+2026-01-09,Whole Foods,Tortilla Chips,Snacks,2,3.91
+2026-01-09,Whole Foods,Sparkling Water,Beverages,1,5.85
+2026-01-09,Whole Foods,Orange Juice,Beverages,2,5.00
+2026-01-09,Whole Foods,Jasmine Rice,Pantry,2,8.74
+2026-01-09,Whole Foods,Pasta,Pantry,2,1.96
+2026-01-09,Whole Foods,Atlantic Salmon,Meat & seafood,1,12.34
+2026-01-09,Whole Foods,Ground Beef,Meat & seafood,1,7.32
+2026-01-09,Whole Foods,Greek Yogurt,Dairy & eggs,2,5.10
+2026-01-09,Whole Foods,Large Eggs,Dairy & eggs,1,4.22
+2026-01-09,Whole Foods,Whole Milk,Dairy & eggs,1,3.67
+2026-01-09,Whole Foods,Bell Peppers,Produce,1,3.69
+2026-01-09,Whole Foods,Avocados,Produce,1,4.61
+2026-01-09,Whole Foods,Tomatoes,Produce,2,2.89
+2026-01-09,Whole Foods,Bananas,Produce,2,1.86
+2026-01-11,Target,Peanut Butter,Pantry,2,5.06
+2026-01-11,Target,Chicken Breast,Meat & seafood,1,9.70
+2026-01-11,Target,Sourdough Bread,Bakery,1,4.81
+2026-01-11,Target,Baby Spinach,Produce,1,3.68
+2026-01-15,Trader Joe's,Dish Soap,Household,2,3.97
+2026-01-15,Trader Joe's,Sparkling Water,Beverages,1,6.02
+2026-01-15,Trader Joe's,Cereal,Pantry,2,4.53
+2026-01-15,Trader Joe's,Bagels,Bakery,1,3.74
+2026-01-15,Trader Joe's,Cheddar Cheese,Dairy & eggs,1,6.82
+2026-01-15,Trader Joe's,Butter,Dairy & eggs,2,4.62
+2026-01-15,Trader Joe's,Whole Milk,Dairy & eggs,1,3.56
+2026-01-15,Trader Joe's,Carrots,Produce,1,1.77
+2026-01-15,Trader Joe's,Avocados,Produce,2,4.98
+2026-01-15,Trader Joe's,Apples,Produce,1,4.37
+2026-01-15,Trader Joe's,Bananas,Produce,2,1.88
+2026-01-17,Trader Joe's,Coffee Beans,Pantry,1,13.03
+2026-01-17,Trader Joe's,Sourdough Bread,Bakery,1,4.78
+2026-01-17,Trader Joe's,Greek Yogurt,Dairy & eggs,2,5.11
+2026-01-17,Trader Joe's,Large Eggs,Dairy & eggs,1,3.99
+2026-01-17,Trader Joe's,Bell Peppers,Produce,2,3.42
+2026-01-21,Safeway,Frozen Pizza,Frozen,2,6.05
+2026-01-21,Safeway,Tortilla Chips,Snacks,1,3.68
+2026-01-21,Safeway,Orange Juice,Beverages,1,4.73
+2026-01-21,Safeway,Ground Beef,Meat & seafood,2,7.05
+2026-01-21,Safeway,Chicken Breast,Meat & seafood,1,10.26
+2026-01-21,Safeway,Whole Milk,Dairy & eggs,1,4.06
+2026-01-21,Safeway,Avocados,Produce,1,4.68
+2026-01-21,Safeway,Tomatoes,Produce,1,3.12
+2026-01-21,Safeway,Baby Spinach,Produce,1,4.31
+2026-01-21,Safeway,Bananas,Produce,2,1.83
+2026-01-24,Trader Joe's,Frozen Berries,Frozen,2,6.87
+2026-01-24,Trader Joe's,Dark Chocolate,Snacks,1,3.39
+2026-01-24,Trader Joe's,Sparkling Water,Beverages,1,5.96
+2026-01-24,Trader Joe's,Atlantic Salmon,Meat & seafood,2,12.91
+2026-01-24,Trader Joe's,Bagels,Bakery,1,4.26
+2026-01-24,Trader Joe's,Sourdough Bread,Bakery,2,4.13
+2026-01-24,Trader Joe's,Apples,Produce,2,4.14
+2026-01-27,Trader Joe's,Laundry Detergent,Household,1,13.58
+2026-01-27,Trader Joe's,Paper Towels,Household,1,10.76
+2026-01-27,Trader Joe's,Olive Oil,Pantry,1,11.53
+2026-01-27,Trader Joe's,Pasta,Pantry,3,2.05
+2026-01-27,Trader Joe's,Cheddar Cheese,Dairy & eggs,1,6.40
+2026-01-27,Trader Joe's,Greek Yogurt,Dairy & eggs,2,5.73
+2026-01-27,Trader Joe's,Large Eggs,Dairy & eggs,1,4.44
+2026-01-27,Trader Joe's,Whole Milk,Dairy & eggs,1,3.56
+2026-01-27,Trader Joe's,Bell Peppers,Produce,1,3.76
+2026-01-27,Trader Joe's,Avocados,Produce,1,4.83
+2026-01-27,Trader Joe's,Bananas,Produce,2,1.84
+2026-01-29,Whole Foods,Trash Bags,Household,1,8.22
+2026-01-29,Whole Foods,Orange Juice,Beverages,1,5.10
+2026-01-29,Whole Foods,Cereal,Pantry,1,4.91
+2026-01-29,Whole Foods,Chicken Breast,Meat & seafood,1,9.82
+2026-01-29,Whole Foods,Sourdough Bread,Bakery,1,4.18
+2026-01-29,Whole Foods,Butter,Dairy & eggs,1,4.66
+2026-01-29,Whole Foods,Carrots,Produce,1,1.76
+2026-01-29,Whole Foods,Tomatoes,Produce,1,3.12
+2026-01-29,Whole Foods,Baby Spinach,Produce,2,4.12
+2026-01-31,Costco,Sparkling Water,Beverages,1,6.20
+2026-01-31,Costco,Apples,Produce,2,4.59
+2026-01-31,Costco,Bananas,Produce,2,1.81
+2026-02-03,Costco,Frozen Pizza,Frozen,1,5.52
+2026-02-03,Costco,Tortilla Chips,Snacks,1,4.11
+2026-02-03,Costco,Coffee Beans,Pantry,1,15.03
+2026-02-03,Costco,Jasmine Rice,Pantry,1,8.63
+2026-02-03,Costco,Ground Beef,Meat & seafood,1,7.00
+2026-02-03,Costco,Bagels,Bakery,1,3.75
+2026-02-03,Costco,Large Eggs,Dairy & eggs,1,4.46
+2026-02-03,Costco,Whole Milk,Dairy & eggs,1,3.96
+2026-02-03,Costco,Avocados,Produce,1,5.00
+2026-02-08,Costco,Frozen Berries,Frozen,1,6.78
+2026-02-08,Costco,Dark Chocolate,Snacks,1,3.23
+2026-02-08,Costco,Sparkling Water,Beverages,1,5.77
+2026-02-08,Costco,Orange Juice,Beverages,1,4.80
+2026-02-08,Costco,Peanut Butter,Pantry,2,5.71
+2026-02-08,Costco,Atlantic Salmon,Meat & seafood,1,12.91
+2026-02-08,Costco,Chicken Breast,Meat & seafood,1,9.28
+2026-02-08,Costco,Sourdough Bread,Bakery,1,4.68
+2026-02-08,Costco,Cheddar Cheese,Dairy & eggs,1,6.67
+2026-02-08,Costco,Greek Yogurt,Dairy & eggs,2,5.72
+2026-02-08,Costco,Whole Milk,Dairy & eggs,1,4.02
+2026-02-08,Costco,Bell Peppers,Produce,1,3.60
+2026-02-08,Costco,Carrots,Produce,1,1.79
+2026-02-08,Costco,Tomatoes,Produce,1,2.90
+2026-02-08,Costco,Baby Spinach,Produce,1,4.03
+2026-02-08,Costco,Bananas,Produce,2,1.81
+2026-02-13,Trader Joe's,Dish Soap,Household,1,3.85
+2026-02-13,Trader Joe's,Tortilla Chips,Snacks,1,3.83
+2026-02-13,Trader Joe's,Cereal,Pantry,2,4.89
+2026-02-13,Trader Joe's,Bagels,Bakery,1,4.26
+2026-02-13,Trader Joe's,Sourdough Bread,Bakery,2,4.44
+2026-02-13,Trader Joe's,Large Eggs,Dairy & eggs,1,4.08
+2026-02-13,Trader Joe's,Whole Milk,Dairy & eggs,1,3.83
+2026-02-13,Trader Joe's,Avocados,Produce,2,4.99
+2026-02-13,Trader Joe's,Apples,Produce,1,4.32
+2026-02-18,Safeway,Paper Towels,Household,1,10.14
+2026-02-18,Safeway,Frozen Pizza,Frozen,1,5.74
+2026-02-18,Safeway,Sparkling Water,Beverages,1,6.25
+2026-02-18,Safeway,Orange Juice,Beverages,2,4.88
+2026-02-18,Safeway,Coffee Beans,Pantry,1,14.22
+2026-02-18,Safeway,Pasta,Pantry,3,1.99
+2026-02-18,Safeway,Ground Beef,Meat & seafood,2,7.88
+2026-02-18,Safeway,Chicken Breast,Meat & seafood,2,10.37
+2026-02-18,Safeway,Cheddar Cheese,Dairy & eggs,1,6.83
+2026-02-18,Safeway,Butter,Dairy & eggs,2,5.18
+2026-02-18,Safeway,Greek Yogurt,Dairy & eggs,2,5.23
+2026-02-18,Safeway,Large Eggs,Dairy & eggs,1,4.42
+2026-02-18,Safeway,Whole Milk,Dairy & eggs,1,4.01
+2026-02-18,Safeway,Bell Peppers,Produce,1,3.36
+2026-02-18,Safeway,Tomatoes,Produce,1,3.10
+2026-02-18,Safeway,Baby Spinach,Produce,1,3.99
+2026-02-18,Safeway,Bananas,Produce,2,1.74
+2026-02-23,Whole Foods,Trash Bags,Household,2,7.84
+2026-02-23,Whole Foods,Frozen Berries,Frozen,1,7.17
+2026-02-23,Whole Foods,Dark Chocolate,Snacks,1,3.63
+2026-02-23,Whole Foods,Tortilla Chips,Snacks,1,4.13
+2026-02-23,Whole Foods,Cereal,Pantry,1,4.55
+2026-02-23,Whole Foods,Atlantic Salmon,Meat & seafood,1,12.39
+2026-02-23,Whole Foods,Bagels,Bakery,1,4.08
+2026-02-23,Whole Foods,Sourdough Bread,Bakery,1,4.64
+2026-02-23,Whole Foods,Whole Milk,Dairy & eggs,1,3.94
+2026-02-23,Whole Foods,Carrots,Produce,1,1.71
+2026-02-23,Whole Foods,Avocados,Produce,1,5.01
+2026-02-23,Whole Foods,Apples,Produce,1,4.46
+2026-02-26,Whole Foods,Sparkling Water,Beverages,1,5.98
+2026-02-26,Whole Foods,Peanut Butter,Pantry,1,4.98
+2026-02-26,Whole Foods,Chicken Breast,Meat & seafood,2,9.40
+2026-02-26,Whole Foods,Greek Yogurt,Dairy & eggs,2,5.50
+2026-02-26,Whole Foods,Large Eggs,Dairy & eggs,1,4.14
+2026-02-26,Whole Foods,Tomatoes,Produce,2,2.80
+2026-02-26,Whole Foods,Baby Spinach,Produce,1,3.72
+2026-02-26,Whole Foods,Bananas,Produce,3,1.99
+2026-03-01,Costco,Orange Juice,Beverages,1,4.96
+2026-03-01,Costco,Olive Oil,Pantry,2,11.65
+2026-03-01,Costco,Ground Beef,Meat & seafood,1,8.09
+2026-03-01,Costco,Sourdough Bread,Bakery,1,4.69
+2026-03-01,Costco,Whole Milk,Dairy & eggs,1,3.54
+2026-03-01,Costco,Bell Peppers,Produce,1,3.57
+2026-03-01,Costco,Avocados,Produce,1,5.05
+2026-03-06,Safeway,Paper Towels,Household,1,9.42
+2026-03-06,Safeway,Frozen Pizza,Frozen,1,5.95
+2026-03-06,Safeway,Tortilla Chips,Snacks,1,3.74
+2026-03-06,Safeway,Sparkling Water,Beverages,1,5.75
+2026-03-06,Safeway,Coffee Beans,Pantry,1,14.80
+2026-03-06,Safeway,Jasmine Rice,Pantry,1,9.62
+2026-03-06,Safeway,Pasta,Pantry,2,1.96
+2026-03-06,Safeway,Atlantic Salmon,Meat & seafood,1,12.57
+2026-03-06,Safeway,Bagels,Bakery,1,3.87
+2026-03-06,Safeway,Cheddar Cheese,Dairy & eggs,1,6.30
+2026-03-06,Safeway,Butter,Dairy & eggs,2,5.22
+2026-03-06,Safeway,Greek Yogurt,Dairy & eggs,2,5.62
+2026-03-06,Safeway,Large Eggs,Dairy & eggs,1,4.10
+2026-03-06,Safeway,Whole Milk,Dairy & eggs,1,3.95
+2026-03-06,Safeway,Avocados,Produce,1,4.63
+2026-03-06,Safeway,Tomatoes,Produce,1,2.93
+2026-03-06,Safeway,Baby Spinach,Produce,2,4.20
+2026-03-06,Safeway,Apples,Produce,2,4.26
+2026-03-06,Safeway,Bananas,Produce,2,1.88
+2026-03-11,Costco,Laundry Detergent,Household,1,13.16
+2026-03-11,Costco,Frozen Berries,Frozen,1,6.52
+2026-03-11,Costco,Dark Chocolate,Snacks,1,3.59
+2026-03-11,Costco,Orange Juice,Beverages,2,4.60
+2026-03-11,Costco,Cereal,Pantry,1,4.92
+2026-03-11,Costco,Chicken Breast,Meat & seafood,1,9.97
+2026-03-11,Costco,Sourdough Bread,Bakery,1,4.20
+2026-03-11,Costco,Large Eggs,Dairy & eggs,1,4.05
+2026-03-11,Costco,Whole Milk,Dairy & eggs,1,3.99
+2026-03-11,Costco,Bell Peppers,Produce,1,3.74
+2026-03-11,Costco,Carrots,Produce,1,1.92
+2026-03-11,Costco,Bananas,Produce,3,1.83
+2026-03-14,Safeway,Dish Soap,Household,1,3.87
+2026-03-14,Safeway,Tortilla Chips,Snacks,1,3.83
+2026-03-14,Safeway,Sparkling Water,Beverages,1,5.98
+2026-03-14,Safeway,Ground Beef,Meat & seafood,1,7.84
+2026-03-14,Safeway,Greek Yogurt,Dairy & eggs,2,5.56
+2026-03-14,Safeway,Avocados,Produce,1,4.95
+2026-03-14,Safeway,Tomatoes,Produce,1,3.20
+2026-03-14,Safeway,Baby Spinach,Produce,1,4.09
+2026-03-14,Safeway,Apples,Produce,2,4.40
+2026-03-18,Costco,Frozen Pizza,Frozen,2,6.08
+2026-03-18,Costco,Peanut Butter,Pantry,1,5.61
+2026-03-18,Costco,Coffee Beans,Pantry,1,13.32
+2026-03-18,Costco,Bagels,Bakery,1,3.97
+2026-03-18,Costco,Sourdough Bread,Bakery,1,4.32
+2026-03-18,Costco,Cheddar Cheese,Dairy & eggs,1,6.22
+2026-03-18,Costco,Large Eggs,Dairy & eggs,1,4.32
+2026-03-18,Costco,Whole Milk,Dairy & eggs,1,4.08
+2026-03-18,Costco,Bananas,Produce,2,1.78
+2026-03-23,Costco,Tortilla Chips,Snacks,1,4.20
+2026-03-23,Costco,Sparkling Water,Beverages,1,5.81
+2026-03-23,Costco,Orange Juice,Beverages,1,5.33
+2026-03-23,Costco,Cereal,Pantry,1,4.81
+2026-03-23,Costco,Atlantic Salmon,Meat & seafood,2,13.73
+2026-03-23,Costco,Chicken Breast,Meat & seafood,1,10.69
+2026-03-23,Costco,Butter,Dairy & eggs,1,5.29
+2026-03-23,Costco,Greek Yogurt,Dairy & eggs,3,5.11
+2026-03-23,Costco,Whole Milk,Dairy & eggs,1,3.86
+2026-03-23,Costco,Bell Peppers,Produce,1,3.53
+2026-03-23,Costco,Carrots,Produce,1,1.91
+2026-03-23,Costco,Avocados,Produce,1,4.96
+2026-03-23,Costco,Tomatoes,Produce,1,2.86
+2026-03-23,Costco,Baby Spinach,Produce,1,3.78
+2026-03-23,Costco,Apples,Produce,1,4.44
+2026-03-23,Costco,Bananas,Produce,2,1.77
+2026-03-28,Trader Joe's,Trash Bags,Household,1,8.55
+2026-03-28,Trader Joe's,Paper Towels,Household,1,10.77
+2026-03-28,Trader Joe's,Frozen Berries,Frozen,1,6.92
+2026-03-28,Trader Joe's,Dark Chocolate,Snacks,1,3.25
+2026-03-28,Trader Joe's,Pasta,Pantry,3,1.83
+2026-03-28,Trader Joe's,Ground Beef,Meat & seafood,2,7.22
+2026-03-28,Trader Joe's,Bagels,Bakery,1,3.88
+2026-03-28,Trader Joe's,Sourdough Bread,Bakery,1,4.26
+2026-03-28,Trader Joe's,Cheddar Cheese,Dairy & eggs,1,6.12
+2026-03-28,Trader Joe's,Large Eggs,Dairy & eggs,1,4.08
+2026-03-28,Trader Joe's,Whole Milk,Dairy & eggs,1,3.82
+2026-03-28,Trader Joe's,Avocados,Produce,2,5.16
+2026-03-28,Trader Joe's,Baby Spinach,Produce,1,4.27
+2026-04-02,Trader Joe's,Frozen Pizza,Frozen,1,5.77
+2026-04-02,Trader Joe's,Sparkling Water,Beverages,1,6.30
+2026-04-02,Trader Joe's,Orange Juice,Beverages,1,4.86
+2026-04-02,Trader Joe's,Jasmine Rice,Pantry,1,8.27
+2026-04-02,Trader Joe's,Chicken Breast,Meat & seafood,1,9.55
+2026-04-02,Trader Joe's,Sourdough Bread,Bakery,1,4.29
+2026-04-02,Trader Joe's,Greek Yogurt,Dairy & eggs,2,5.11
+2026-04-02,Trader Joe's,Whole Milk,Dairy & eggs,1,4.07
+2026-04-02,Trader Joe's,Avocados,Produce,1,4.97
+2026-04-02,Trader Joe's,Tomatoes,Produce,1,2.77
+2026-04-02,Trader Joe's,Apples,Produce,2,4.49
+2026-04-02,Trader Joe's,Bananas,Produce,2,1.85
+2026-04-04,Trader Joe's,Dish Soap,Household,1,3.92
+2026-04-04,Trader Joe's,Tortilla Chips,Snacks,1,4.05
+2026-04-04,Trader Joe's,Peanut Butter,Pantry,2,5.18
+2026-04-04,Trader Joe's,Atlantic Salmon,Meat & seafood,1,13.94
+2026-04-04,Trader Joe's,Large Eggs,Dairy & eggs,1,4.04
+2026-04-04,Trader Joe's,Bell Peppers,Produce,1,3.49
+2026-04-09,Trader Joe's,Dark Chocolate,Snacks,1,3.36
+2026-04-09,Trader Joe's,Coffee Beans,Pantry,1,14.54
+2026-04-09,Trader Joe's,Cereal,Pantry,1,4.88
+2026-04-09,Trader Joe's,Olive Oil,Pantry,1,12.18
+2026-04-09,Trader Joe's,Ground Beef,Meat & seafood,1,7.78
+2026-04-09,Trader Joe's,Bagels,Bakery,1,3.74
+2026-04-09,Trader Joe's,Sourdough Bread,Bakery,1,4.73
+2026-04-09,Trader Joe's,Cheddar Cheese,Dairy & eggs,1,6.02
+2026-04-09,Trader Joe's,Butter,Dairy & eggs,2,4.84
+2026-04-09,Trader Joe's,Whole Milk,Dairy & eggs,1,3.55
+2026-04-09,Trader Joe's,Carrots,Produce,1,1.72
+2026-04-09,Trader Joe's,Avocados,Produce,1,5.06
+2026-04-09,Trader Joe's,Baby Spinach,Produce,1,3.77
+2026-04-09,Trader Joe's,Bananas,Produce,2,2.00
+2026-04-12,Costco,Sparkling Water,Beverages,2,6.10
+2026-04-12,Costco,Orange Juice,Beverages,1,4.79
+2026-04-12,Costco,Chicken Breast,Meat & seafood,1,10.15
+2026-04-12,Costco,Greek Yogurt,Dairy & eggs,3,5.40
+2026-04-12,Costco,Large Eggs,Dairy & eggs,1,3.98
+2026-04-12,Costco,Bell Peppers,Produce,1,3.39
+2026-04-12,Costco,Tomatoes,Produce,1,2.89
+2026-04-12,Costco,Apples,Produce,1,4.72
+2026-04-16,Target,Laundry Detergent,Household,1,12.22
+2026-04-16,Target,Paper Towels,Household,1,10.61
+2026-04-16,Target,Frozen Pizza,Frozen,1,5.84
+2026-04-16,Target,Frozen Berries,Frozen,1,7.48
+2026-04-16,Target,Tortilla Chips,Snacks,1,4.07
+2026-04-16,Target,Atlantic Salmon,Meat & seafood,1,13.78
+2026-04-16,Target,Sourdough Bread,Bakery,1,4.68
+2026-04-16,Target,Whole Milk,Dairy & eggs,1,3.76
+2026-04-16,Target,Avocados,Produce,2,5.24
+2026-04-16,Target,Bananas,Produce,3,2.04
+2026-04-19,Safeway,Sparkling Water,Beverages,1,5.92
+2026-04-19,Safeway,Pasta,Pantry,2,1.87
+2026-04-19,Safeway,Chicken Breast,Meat & seafood,1,9.77
+2026-04-19,Safeway,Cheddar Cheese,Dairy & eggs,1,6.71
+2026-04-19,Safeway,Greek Yogurt,Dairy & eggs,3,5.88
+2026-04-19,Safeway,Large Eggs,Dairy & eggs,1,4.46
+2026-04-19,Safeway,Carrots,Produce,1,1.79
+2026-04-19,Safeway,Baby Spinach,Produce,1,3.96
+2026-04-22,Target,Dark Chocolate,Snacks,1,3.25
+2026-04-22,Target,Orange Juice,Beverages,1,4.75
+2026-04-22,Target,Cereal,Pantry,1,4.56
+2026-04-22,Target,Ground Beef,Meat & seafood,1,8.01
+2026-04-22,Target,Bagels,Bakery,1,3.95
+2026-04-22,Target,Whole Milk,Dairy & eggs,2,3.88
+2026-04-22,Target,Tomatoes,Produce,1,3.16
+2026-04-22,Target,Apples,Produce,1,4.16
+2026-04-22,Target,Bananas,Produce,2,1.88
+2026-04-25,Safeway,Peanut Butter,Pantry,1,5.61
+2026-04-25,Safeway,Coffee Beans,Pantry,1,12.92
+2026-04-25,Safeway,Jasmine Rice,Pantry,1,9.55
+2026-04-25,Safeway,Sourdough Bread,Bakery,2,4.45
+2026-04-25,Safeway,Butter,Dairy & eggs,1,4.99
+2026-04-25,Safeway,Large Eggs,Dairy & eggs,1,4.06
+2026-04-25,Safeway,Bell Peppers,Produce,1,3.45
+2026-04-25,Safeway,Avocados,Produce,1,5.24
+2026-04-25,Safeway,Baby Spinach,Produce,1,3.98
+2026-04-28,Costco,Trash Bags,Household,1,8.67
+2026-04-28,Costco,Frozen Pizza,Frozen,1,5.53
+2026-04-28,Costco,Tortilla Chips,Snacks,1,3.74
+2026-04-28,Costco,Sparkling Water,Beverages,1,6.17
+2026-04-28,Costco,Chicken Breast,Meat & seafood,1,9.24
+2026-04-28,Costco,Greek Yogurt,Dairy & eggs,2,5.22
+2026-04-28,Costco,Whole Milk,Dairy & eggs,1,3.69
+2026-04-28,Costco,Bananas,Produce,2,1.96
+2026-05-03,Costco,Dish Soap,Household,1,3.76
+2026-05-03,Costco,Paper Towels,Household,1,9.40
+2026-05-03,Costco,Orange Juice,Beverages,1,5.25
+2026-05-03,Costco,Cereal,Pantry,1,5.15
+2026-05-03,Costco,Atlantic Salmon,Meat & seafood,2,12.87
+2026-05-03,Costco,Ground Beef,Meat & seafood,1,7.44
+2026-05-03,Costco,Bagels,Bakery,1,3.83
+2026-05-03,Costco,Sourdough Bread,Bakery,2,4.63
+2026-05-03,Costco,Cheddar Cheese,Dairy & eggs,1,6.79
+2026-05-03,Costco,Large Eggs,Dairy & eggs,1,4.35
+2026-05-03,Costco,Whole Milk,Dairy & eggs,1,4.08
+2026-05-03,Costco,Carrots,Produce,2,1.68
+2026-05-03,Costco,Avocados,Produce,1,5.17
+2026-05-03,Costco,Tomatoes,Produce,2,3.17
+2026-05-03,Costco,Baby Spinach,Produce,1,4.15
+2026-05-03,Costco,Apples,Produce,1,4.66
+2026-05-03,Costco,Bananas,Produce,2,1.92
+2026-05-05,Safeway,Frozen Berries,Frozen,1,6.92
+2026-05-05,Safeway,Chicken Breast,Meat & seafood,2,9.97
+2026-05-05,Safeway,Greek Yogurt,Dairy & eggs,2,5.75
+2026-05-05,Safeway,Bell Peppers,Produce,1,3.33
+2026-05-09,Costco,Dark Chocolate,Snacks,1,3.49
+2026-05-09,Costco,Tortilla Chips,Snacks,1,3.99
+2026-05-09,Costco,Sparkling Water,Beverages,1,5.57
+2026-05-09,Costco,Pasta,Pantry,2,2.02
+2026-05-09,Costco,Sourdough Bread,Bakery,2,4.51
+2026-05-09,Costco,Large Eggs,Dairy & eggs,2,4.02
+2026-05-09,Costco,Whole Milk,Dairy & eggs,1,3.56
+2026-05-09,Costco,Avocados,Produce,2,5.38
+2026-05-09,Costco,Baby Spinach,Produce,1,3.72
+2026-05-09,Costco,Bananas,Produce,2,1.77
+2026-05-13,Costco,Frozen Pizza,Frozen,1,6.43
+2026-05-13,Costco,Orange Juice,Beverages,1,4.83
+2026-05-13,Costco,Coffee Beans,Pantry,1,13.22
+2026-05-13,Costco,Olive Oil,Pantry,1,12.68
+2026-05-13,Costco,Chicken Breast,Meat & seafood,1,9.65
+2026-05-13,Costco,Cheddar Cheese,Dairy & eggs,1,6.45
+2026-05-13,Costco,Butter,Dairy & eggs,2,4.70
+2026-05-13,Costco,Greek Yogurt,Dairy & eggs,3,5.36
+2026-05-13,Costco,Tomatoes,Produce,2,2.94
+2026-05-13,Costco,Apples,Produce,1,4.29
+2026-05-17,Costco,Sparkling Water,Beverages,1,6.06
+2026-05-17,Costco,Peanut Butter,Pantry,2,5.26
+2026-05-17,Costco,Cereal,Pantry,1,4.63
+2026-05-17,Costco,Atlantic Salmon,Meat & seafood,2,13.06
+2026-05-17,Costco,Ground Beef,Meat & seafood,1,7.74
+2026-05-17,Costco,Bagels,Bakery,1,4.10
+2026-05-17,Costco,Sourdough Bread,Bakery,1,4.42
+2026-05-17,Costco,Large Eggs,Dairy & eggs,1,4.23
+2026-05-17,Costco,Whole Milk,Dairy & eggs,1,4.01
+2026-05-17,Costco,Bell Peppers,Produce,2,3.32
+2026-05-17,Costco,Carrots,Produce,1,1.81
+2026-05-17,Costco,Avocados,Produce,2,5.36
+2026-05-17,Costco,Baby Spinach,Produce,1,4.01
+2026-05-17,Costco,Bananas,Produce,3,2.00
+2026-05-21,Costco,Trash Bags,Household,1,9.11
+2026-05-21,Costco,Frozen Berries,Frozen,1,6.60
+2026-05-21,Costco,Dark Chocolate,Snacks,1,3.58
+2026-05-21,Costco,Tortilla Chips,Snacks,2,3.98
+2026-05-21,Costco,Orange Juice,Beverages,1,4.75
+2026-05-21,Costco,Jasmine Rice,Pantry,2,8.47
+2026-05-21,Costco,Chicken Breast,Meat & seafood,1,10.52
+2026-05-21,Costco,Whole Milk,Dairy & eggs,1,3.83
+2026-05-21,Costco,Avocados,Produce,1,4.72
+2026-05-21,Costco,Apples,Produce,1,4.48
+2026-05-25,Trader Joe's,Paper Towels,Household,1,10.03
+2026-05-25,Trader Joe's,Sparkling Water,Beverages,2,5.68
+2026-05-25,Trader Joe's,Sourdough Bread,Bakery,2,4.20
+2026-05-25,Trader Joe's,Cheddar Cheese,Dairy & eggs,1,6.99
+2026-05-25,Trader Joe's,Greek Yogurt,Dairy & eggs,2,5.56
+2026-05-25,Trader Joe's,Large Eggs,Dairy & eggs,1,4.33
+2026-05-25,Trader Joe's,Tomatoes,Produce,1,2.85
+2026-05-25,Trader Joe's,Baby Spinach,Produce,1,3.83
+2026-05-25,Trader Joe's,Bananas,Produce,2,1.96
+2026-05-27,Safeway,Frozen Pizza,Frozen,2,5.77
+2026-05-27,Safeway,Pasta,Pantry,3,1.89
+2026-05-27,Safeway,Ground Beef,Meat & seafood,1,8.02
+2026-05-27,Safeway,Bagels,Bakery,1,3.95
+2026-05-27,Safeway,Butter,Dairy & eggs,1,5.07
+2026-05-27,Safeway,Whole Milk,Dairy & eggs,1,3.52
+2026-05-27,Safeway,Bell Peppers,Produce,1,3.77
+2026-05-27,Safeway,Avocados,Produce,1,5.14
+2026-05-30,Whole Foods,Orange Juice,Beverages,1,4.69
+2026-05-30,Whole Foods,Coffee Beans,Pantry,1,14.95
+2026-05-30,Whole Foods,Atlantic Salmon,Meat & seafood,2,13.06
+2026-05-30,Whole Foods,Chicken Breast,Meat & seafood,1,9.27
+2026-05-30,Whole Foods,Sourdough Bread,Bakery,2,4.76
+2026-05-30,Whole Foods,Carrots,Produce,1,1.70
+2026-05-30,Whole Foods,Apples,Produce,1,4.24

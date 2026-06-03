@@ -3,6 +3,9 @@ import plotly.graph_objects as go
 import pandas as pd
 from utils import data as udata
 
+# Match the prototype's system font stack in chart text too.
+_FONT = "system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif"
+
 # ── Inline SVG icons (from gt-ui.jsx) ────────────────────────────────
 _SVG = {
     "cart":   '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="{c}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="20" r="1.4"/><circle cx="18" cy="20" r="1.4"/><path d="M2 3h2.2l2.3 12.2a1.5 1.5 0 0 0 1.5 1.2h8.8a1.5 1.5 0 0 0 1.5-1.2L21 7H5.5"/></svg>',
@@ -24,18 +27,22 @@ def _card_head(icon_key: str, title: str, sub: str = "", right: str = "") -> Non
         f'<span style="font-size:11px;color:#9ca3af;font-weight:500;">{right}</span>'
         if right else ""
     )
+    sub_html = (
+        f'<div style="font-size:11px;color:#9ca3af;margin-top:2px;">{sub}</div>'
+        if sub else ""
+    )
+    # Single-line HTML: a tag split across newlines breaks Streamlit's HTML-block
+    # detection and leaks stray </div> tags as literal text.
     st.markdown(
-        f"""<div style="display:flex;align-items:center;justify-content:space-between;
-                padding:14px 18px 12px;border-bottom:1px solid #f3f4f6;">
-          <div style="display:flex;align-items:center;gap:8px;">
-            {_icon(icon_key)}
-            <div>
-              <div style="font-size:13px;font-weight:600;color:#1f2937;line-height:1.3;">{title}</div>
-              {'<div style="font-size:11px;color:#9ca3af;margin-top:2px;">'+sub+'</div>' if sub else ''}
-            </div>
-          </div>
-          {right_html}
-        </div>""",
+        '<div style="display:flex;align-items:center;justify-content:space-between;'
+        'padding:14px 18px 12px;border-bottom:1px solid #f3f4f6;">'
+        '<div style="display:flex;align-items:center;gap:8px;">'
+        f'{_icon(icon_key)}'
+        f'<div><div style="font-size:13px;font-weight:600;color:#1f2937;line-height:1.3;">{title}</div>'
+        f'{sub_html}</div>'
+        '</div>'
+        f'{right_html}'
+        '</div>',
         unsafe_allow_html=True,
     )
 
@@ -70,26 +77,30 @@ def _spend_donut(by_cat: pd.DataFrame, total: float) -> None:
     fig = go.Figure(go.Pie(
         labels=by_cat["category"],
         values=by_cat["value"].round(2),
-        hole=0.65,
+        hole=0.654,                       # innerRadius 68 / outerRadius 104 (prototype)
+        sort=False,                       # keep our descending-by-value order
+        direction="clockwise",
+        rotation=0,                       # largest slice starts at the top
         marker=dict(colors=by_cat["color"].tolist(), line=dict(color="white", width=2)),
         textinfo="none",
         hovertemplate="<b>%{label}</b><br>$%{value:,.2f} · %{percent}<extra></extra>",
     ))
     fig.update_layout(
         margin=dict(l=0, r=0, t=8, b=8),
-        height=240,
+        height=220,
         showlegend=False,
+        font=dict(family=_FONT),
         annotations=[
             dict(
                 text="TOTAL SPEND",
-                x=0.5, y=0.58,
-                font=dict(size=10, color="#9ca3af", family="system-ui, Arial, sans-serif"),
+                x=0.5, y=0.57,
+                font=dict(size=11, color="#9ca3af", family="system-ui, Arial, sans-serif"),
                 showarrow=False,
             ),
             dict(
                 text=f"<b>{total_fmt}</b>",
-                x=0.5, y=0.42,
-                font=dict(size=17, color="#171717", family="system-ui, Arial, sans-serif"),
+                x=0.5, y=0.43,
+                font=dict(size=23, color="#262626", family="system-ui, Arial, sans-serif"),
                 showarrow=False,
             ),
         ],
@@ -98,27 +109,24 @@ def _spend_donut(by_cat: pd.DataFrame, total: float) -> None:
     )
 
     cat_total = by_cat["value"].sum()
+    # Built with flex rows (not a <table>) so Streamlit's default markdown-table
+    # styling (cell borders + padding) can't turn this into a boxed grid.
     legend_rows = "".join(
-        f'<tr>'
-        f'<td style="padding:5px 0;white-space:nowrap;">'
-        f'<span style="display:inline-block;width:10px;height:10px;border-radius:2px;'
-        f'background:{row["color"]};margin-right:6px;vertical-align:middle;"></span>'
-        f'<span style="font-size:13px;color:#374151;">{row["category"]}</span></td>'
-        f'<td style="padding:5px 0 5px 16px;text-align:right;font-size:13px;'
-        f'font-weight:600;color:#111827;white-space:nowrap;">${row["value"]:,.2f}</td>'
-        f'<td style="padding:5px 0 5px 8px;text-align:right;font-size:12px;color:#9ca3af;">'
-        f'{row["value"]/cat_total*100:.0f}%</td>'
-        f'</tr>'
+        f'<div style="display:flex;align-items:center;gap:12px;padding:5px 0;">'
+        f'<span style="width:12px;height:12px;flex-shrink:0;border-radius:3px;background:{row["color"]};"></span>'
+        f'<span style="font-size:13px;color:#4b5563;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{row["category"]}</span>'
+        f'<span style="margin-left:auto;font-size:13px;font-weight:600;color:#111827;white-space:nowrap;font-variant-numeric:tabular-nums;">${row["value"]:,.2f}</span>'
+        f'<span style="width:42px;flex-shrink:0;text-align:right;font-size:12px;color:#9ca3af;font-variant-numeric:tabular-nums;">{row["value"]/cat_total*100:.0f}%</span>'
+        f'</div>'
         for _, row in by_cat.iterrows()
     )
 
-    c_chart, c_legend = st.columns([2.2, 2.2])
+    c_chart, c_legend = st.columns([2, 2.6], gap="medium", vertical_alignment="center")
     with c_chart:
         st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": False})
     with c_legend:
         st.markdown(
-            f'<table style="width:100%;border-collapse:collapse;margin-top:16px;">'
-            f'{legend_rows}</table>',
+            f'<div style="display:flex;flex-direction:column;">{legend_rows}</div>',
             unsafe_allow_html=True,
         )
 
@@ -129,21 +137,22 @@ def _freq_bars(freq: pd.DataFrame) -> None:
         y=df_plot["item"],
         x=df_plot["count"],
         orientation="h",
-        marker=dict(color=df_plot["color"].tolist(), opacity=0.88),
+        marker=dict(color=df_plot["color"].tolist(), cornerradius=5),  # rounded ends
         text=df_plot["count"],
         textposition="outside",
-        textfont=dict(size=12, color="#9ca3af"),
-        hovertemplate="<b>%{y}</b>: %{x}<extra></extra>",
+        textfont=dict(size=11, color="#6b7280"),
+        hovertemplate="<b>%{y}</b>: %{x} purchases<extra></extra>",
         cliponaxis=False,
     ))
     fig.update_layout(
         margin=dict(l=0, r=36, t=8, b=8),
-        height=280,
+        height=max(220, len(df_plot) * 38),       # prototype: max(220, n*38)
         paper_bgcolor="white",
         plot_bgcolor="white",
-        xaxis=dict(showgrid=False, showticklabels=False, zeroline=False, range=[0, df_plot["count"].max() * 1.18]),
+        font=dict(family=_FONT),
+        xaxis=dict(showgrid=True, gridcolor="#f0f0ef", showticklabels=False, zeroline=False, range=[0, df_plot["count"].max() * 1.18]),
         yaxis=dict(tickfont=dict(size=12, color="#4b5563"), showgrid=False, automargin=True),
-        bargap=0.38,
+        bargap=0.42,                               # ≈ maxBarSize 22 within 38px slots
     )
     st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": False})
 
@@ -153,7 +162,7 @@ def _trend_area(trend: pd.DataFrame) -> None:
         x=trend["week"],
         y=trend["total"].round(2),
         fill="tozeroy",
-        line=dict(color="#16a34a", width=2.5),
+        line=dict(color="#16a34a", width=2.5, shape="spline", smoothing=0.7),
         fillcolor="rgba(22, 163, 74, 0.09)",
         mode="lines",
         hovertemplate="<b>%{x|%b %d}</b><br>$%{y:,.2f}<extra></extra>",
@@ -163,6 +172,7 @@ def _trend_area(trend: pd.DataFrame) -> None:
         height=200,
         paper_bgcolor="white",
         plot_bgcolor="white",
+        font=dict(family=_FONT),
         xaxis=dict(
             showgrid=False,
             tickfont=dict(size=11, color="#9ca3af"),
@@ -236,16 +246,20 @@ def render(df: pd.DataFrame | None = None) -> None:
     freq = udata.repurchase_frequency(view, 8)
     trend = udata.spend_over_time(view)
 
-    # ── KPI row ───────────────────────────────────────────────────────
-    c1, c2, c3, c4 = st.columns(4, gap="small")
-    with c1:
+    # ── KPI grid (2×2, matching prototype at this content width) ──────
+    r1c1, r1c2 = st.columns(2, gap="small")
+    with r1c1:
         _kpi_card("TOTAL SPEND", f"${k['total']:,.2f}",
                   f"{k['units']} items across {k['trips']} trips", accent=True)
-    with c2:
+    with r1c2:
         _kpi_card("SHOPPING TRIPS", str(k['trips']), "distinct store visits")
-    with c3:
+
+    st.markdown('<div style="height:16px"></div>', unsafe_allow_html=True)
+
+    r2c1, r2c2 = st.columns(2, gap="small")
+    with r2c1:
         _kpi_card("AVG. BASKET", f"${k['avg_basket']:,.2f}", "spend per trip")
-    with c4:
+    with r2c2:
         _kpi_card("ITEMS TRACKED", str(k['items']), "unique products")
 
     # ── Charts: donut + frequency bars ───────────────────────────────

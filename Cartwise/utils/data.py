@@ -1,8 +1,36 @@
 import io
 import pandas as pd
+import streamlit as st
 
 REQUIRED_COLS = {"date", "store", "item", "category", "quantity", "price"}
 SAMPLE_PATH = "data/Purchase_data.csv"
+
+
+# ── Cross-reload data store ───────────────────────────────────────────
+# Tab navigation uses anchor links (?tab=…) that trigger a full page reload,
+# which clears st.session_state. This process-lifetime cache survives those
+# reloads so an uploaded dataset is retained for the whole session.
+# (Single-user local app, so a shared store is the intended behaviour.)
+@st.cache_resource
+def _data_store() -> dict:
+    return {}
+
+
+def remember(df: pd.DataFrame, source: str) -> None:
+    store = _data_store()
+    store["df"] = df
+    store["source"] = source
+
+
+def recall() -> tuple[pd.DataFrame | None, str | None]:
+    store = _data_store()
+    return store.get("df"), store.get("source")
+
+
+def forget() -> None:
+    store = _data_store()
+    store.pop("df", None)
+    store.pop("source", None)
 
 CATEGORY_COLORS = {
     "Produce":        "#16a34a",
@@ -113,12 +141,14 @@ def spend_over_time(df: pd.DataFrame) -> pd.DataFrame:
     return result
 
 
-def predict_next_week(df: pd.DataFrame, horizon: int = 7) -> dict:
+def predict_next_week(df: pd.DataFrame, horizon: int = 7, min_items: int = 10) -> dict:
     """Port of GT.predictNextWeek: avg-interval vs days-since heuristic.
 
     Returns {"items": [...], "grouped": [{"category", "color", "items": [...]}]}.
     Each item has: item, category, color, interval, days_since, due_in, qty, est_price, bought.
-    Only items with ≥2 purchases whose due_in ≤ horizon are included.
+    Items with ≥2 purchases and due_in ≤ horizon are included; if fewer than
+    `min_items` qualify, the next-soonest items are added so the list shows at
+    least `min_items` (when that much purchase history exists).
     """
     by_item: dict = {}
     for _, row in df.iterrows():
@@ -136,7 +166,7 @@ def predict_next_week(df: pd.DataFrame, horizon: int = 7) -> dict:
         by_item[item]["prices"].append(float(row["price"]))
 
     latest = df["date"].max()
-    items = []
+    candidates = []
     for it in by_item.values():
         if len(it["dates"]) < 2:
             continue
@@ -148,12 +178,10 @@ def predict_next_week(df: pd.DataFrame, horizon: int = 7) -> dict:
         last = dates[-1]
         days_since = (latest - last).days
         due_in = interval - days_since
-        if due_in > horizon:
-            continue
         qtys_sorted = sorted(it["qtys"])
         qty = qtys_sorted[len(qtys_sorted) // 2]  # median
         avg_price = sum(it["prices"]) / len(it["prices"])
-        items.append({
+        candidates.append({
             "item": it["item"],
             "category": it["category"],
             "color": CATEGORY_COLORS.get(it["category"], "#94a3b8"),
@@ -165,7 +193,11 @@ def predict_next_week(df: pd.DataFrame, horizon: int = 7) -> dict:
             "bought": len(it["dates"]),
         })
 
-    items.sort(key=lambda x: x["due_in"])
+    # Soonest first; keep everything due within the horizon, but always show at
+    # least `min_items` by topping up with the next-soonest candidates.
+    candidates.sort(key=lambda x: x["due_in"])
+    due = [c for c in candidates if c["due_in"] <= horizon]
+    items = due if len(due) >= min_items else candidates[:min_items]
 
     groups: dict = {}
     for it in items:

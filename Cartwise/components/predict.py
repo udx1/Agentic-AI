@@ -213,12 +213,13 @@ def render(df: pd.DataFrame | None = None) -> None:
         # Export button
         export_lines = _build_export(pred, selected_items, df, st.session_state)
         st.download_button(
-            "⬇  Export shopping list",
+            "Export shopping list",
             data=export_lines,
             file_name="shopping-list.txt",
             mime="text/plain",
             use_container_width=True,
             disabled=len(selected_items) == 0,
+            icon=":material/download:",
         )
 
         st.markdown('<div style="height:12px"></div>', unsafe_allow_html=True)
@@ -232,18 +233,25 @@ def render(df: pd.DataFrame | None = None) -> None:
                 f'</div>',
                 unsafe_allow_html=True,
             )
+            # Each row is two flex children — a dot + a single text span — so the
+            # sentence flows normally. (A loose text node + <b> become separate
+            # flex items, which is what made the text look broken.)
+            _bullets = [
+                ("We measure the ", "average days between purchases", " for each item."),
+                ("Compared against ", "days since you last bought it", "."),
+                ("Items due within ", "the next 7 days", " land on this list."),
+            ]
+            bullets_html = "".join(
+                '<div style="display:flex;gap:10px;margin-bottom:10px;">'
+                '<span style="margin-top:7px;width:6px;height:6px;border-radius:50%;'
+                'background:#16a34a;flex-shrink:0;"></span>'
+                f'<span style="font-size:13px;color:#6b7280;line-height:1.5;">{pre}'
+                f'<b style="color:#374151;font-weight:600;">{bold}</b>{post}</span>'
+                '</div>'
+                for pre, bold, post in _bullets
+            )
             st.markdown(
-                '<ul style="margin:8px 16px 14px;padding:0;list-style:none;">'
-                '<li style="display:flex;gap:10px;margin-bottom:10px;font-size:13px;color:#6b7280;">'
-                '<span style="margin-top:6px;width:6px;height:6px;border-radius:50%;background:#16a34a;flex-shrink:0;"></span>'
-                'We measure the <b style="color:#374151;">average days between purchases</b> for each item.</li>'
-                '<li style="display:flex;gap:10px;margin-bottom:10px;font-size:13px;color:#6b7280;">'
-                '<span style="margin-top:6px;width:6px;height:6px;border-radius:50%;background:#16a34a;flex-shrink:0;"></span>'
-                'Compared against <b style="color:#374151;">days since you last bought it</b>.</li>'
-                '<li style="display:flex;gap:10px;font-size:13px;color:#6b7280;">'
-                '<span style="margin-top:6px;width:6px;height:6px;border-radius:50%;background:#16a34a;flex-shrink:0;"></span>'
-                'Items due within <b style="color:#374151;">the next 7 days</b> land on this list.</li>'
-                '</ul>',
+                f'<div style="margin:8px 16px 14px;">{bullets_html}</div>',
                 unsafe_allow_html=True,
             )
 

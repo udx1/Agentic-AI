@@ -1,0 +1,11 @@
+date,store,item,category,quantity,price
+2026-01-03,Costco,Paper Towels,Household,1,9.23
+2026-01-03,Costco,Cereal,Pantry,1,5.12
+2026-01-03,Costco,Chicken Breast,Meat & seafood,2,9.30
+2026-01-03,Costco,Cheddar Cheese,Dairy & eggs,2,6.44
+2026-01-03,Costco,Avocados,Produce,1,4.75
+2026-01-03,Costco,Baby Spinach,Produce,2,4.04
+2026-01-05,Costco,Coffee Beans,Pantry,2,13.59
+2026-01-05,Costco,Bagels,Bakery,1,4.00
+2026-01-05,Costco,Sourdough Bread,Bakery,1,4.46
+2026-01-05,Costco,Whole Milk,Dairy & eggs,1,3.95

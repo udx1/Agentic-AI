@@ -14,10 +14,17 @@ if _tab not in ("import", "dashboard", "predict"):
     _tab = "dashboard"
 
 # ── Bootstrap session data (safe to run on every tab) ─────────────────
+# Tab links reload the page (clearing session_state), so restore any
+# previously uploaded dataset from the cross-reload store first.
 if "df" not in st.session_state:
-    from utils.data import load_sample
-    st.session_state.df = load_sample()
-    st.session_state.source = "sample"
+    from utils.data import load_sample, recall
+    _saved_df, _saved_source = recall()
+    if _saved_df is not None:
+        st.session_state.df = _saved_df
+        st.session_state.source = _saved_source
+    else:
+        st.session_state.df = load_sample()
+        st.session_state.source = "sample"
 
 _source = st.session_state.get("source", "sample")
 _dot_color = "#f59e0b" if _source == "sample" else "#16a34a"
@@ -26,6 +33,14 @@ _dot_label = "Sample data" if _source == "sample" else "Your data"
 # ── Global CSS ────────────────────────────────────────────────────────
 st.markdown("""
 <style>
+/* Match the prototype's system font stack (Tailwind default sans) instead of
+   Streamlit's Source Sans Pro. Unstyled inline HTML inherits from these
+   containers; explicit monospace/plotly fonts keep their own family. */
+.stApp, [data-testid="stAppViewContainer"], [data-testid="stMarkdownContainer"],
+.stMarkdown, .stHeading, h1, h2, h3, h4, p, label, button, input, textarea {
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important;
+}
+
 /* Hide Streamlit chrome */
 [data-testid="stHeader"]  { display: none !important; }
 #MainMenu                 { visibility: hidden; }
@@ -75,7 +90,9 @@ footer                    { visibility: hidden; }
 """, unsafe_allow_html=True)
 
 # ── SVG icon helpers ──────────────────────────────────────────────────
-def _nav_icon(key: str, color: str, size: int = 16) -> str:
+# Returned as a base64 data-URI (not inline SVG): st.html()'s sanitizer strips
+# inline <svg>, so nav icons must ride in as a CSS background image.
+def _nav_icon(key: str, color: str, size: int = 17) -> str:
     paths = {
         "upload": (
             '<path d="M12 15V4m0 0L8 8m4-4l4 4"/>'
@@ -96,12 +113,14 @@ def _nav_icon(key: str, color: str, size: int = 16) -> str:
             '<path d="M4 19C8 13 11 10 17 8"/>'
         ),
     }
-    return (
+    svg = (
         f'<svg xmlns="http://www.w3.org/2000/svg" width="{size}" height="{size}" '
         f'viewBox="0 0 24 24" fill="none" '
         f'stroke="{color}" stroke-width="1.8" stroke-linecap="round" '
         f'stroke-linejoin="round">{paths.get(key, "")}</svg>'
     )
+    b64 = base64.b64encode(svg.encode()).decode()
+    return f"data:image/svg+xml;base64,{b64}"
 
 
 # ── Top navigation bar ────────────────────────────────────────────────
@@ -116,14 +135,16 @@ for tab_key, label, icon_key in _NAV:
     active = _tab == tab_key
     bg    = "#f0fdf4" if active else "transparent"
     color = "#15803d" if active else "#6b7280"
-    icon  = _nav_icon(icon_key, color)
+    icon_uri = _nav_icon(icon_key, color)
     nav_links += (
         f'<a href="?tab={tab_key}" target="_parent" style="'
-        f'display:inline-flex;align-items:center;gap:6px;'
+        f'display:inline-flex;align-items:center;gap:7px;'
         f'background:{bg};color:{color};border-radius:12px;'
         f'padding:7px 16px;font-size:14px;font-weight:600;'
         f'text-decoration:none;white-space:nowrap;">'
-        f'{icon} {label}</a>'
+        f'<span style="display:inline-block;width:17px;height:17px;flex-shrink:0;'
+        f'background:url({icon_uri}) no-repeat center/contain;"></span>'
+        f'{label}</a>'
     )
 
 # Leaf icon as base64 SVG — same approach as button icons (avoids iframe sanitizer stripping inline SVG)

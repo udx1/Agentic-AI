@@ -1,6 +1,6 @@
 import base64
 import streamlit as st
-from utils.data import load_sample, load_upload, summary
+from utils.data import load_sample, load_upload, summary, remember, forget
 
 _CAT_COLORS = {
     "Produce":        "#16a34a",
@@ -89,22 +89,11 @@ def render():
     </style>
     """, unsafe_allow_html=True)
 
-    # ── Header: title + buttons as one HTML block ─────────────────────
-    # Both buttons live inside st.html() so we get a single flex row with
-    # proper alignment. Sample CSV is a base64 data-URI download link;
-    # Upload CSV triggers the hidden file input via JS.
-    _csv_b64 = base64.b64encode(
-        load_sample().to_csv(index=False).encode()
-    ).decode()
+    # ── Header: title + Sample / Upload buttons ───────────────────────
+    # Sample CSV is a real st.download_button: a data: URI <a> inside st.html()
+    # gets stripped by the sanitizer, so the old link never actually downloaded.
+    _sample_csv = load_sample().to_csv(index=False)
 
-    # Base64-encode the SVG icons so CSS url() contains no < > chars that
-    # would confuse the HTML parser inside the <style> raw-text block.
-    _DL_B64 = base64.b64encode(
-        b"<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none'"
-        b" stroke='#374151' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'>"
-        b"<path d='M12 4v11m0 0l-4-4m4 4l4-4'/>"
-        b"<path d='M5 18v1a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-1'/></svg>"
-    ).decode()
     _UP_B64 = base64.b64encode(
         b"<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none'"
         b" stroke='white' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'>"
@@ -112,70 +101,62 @@ def render():
         b"<path d='M5 15v3a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-3'/></svg>"
     ).decode()
 
-    st.html(f"""
-    <style>
-      body {{ margin:0; padding:0; }}
-      * {{ box-sizing:border-box; }}
-      .hdr {{
-        display:flex; align-items:flex-end; justify-content:space-between;
-        gap:16px; padding:2px 0 16px; flex-wrap:wrap;
-        font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Arial,sans-serif;
-      }}
-      h1 {{
-        font-size:24px; font-weight:700; color:#171717;
-        letter-spacing:-0.3px; margin:0 0 5px; line-height:1.25;
-      }}
-      .sub {{ font-size:14px; color:#6b7280; margin:0; line-height:1.5; }}
-      .btns {{ display:flex; gap:10px; align-items:center; flex-shrink:0; }}
-      .btn-outline {{
-        display:inline-flex; align-items:center;
-        background:white; color:#374151;
-        border:1px solid #e5e7eb; border-radius:12px;
-        padding:9px 16px; font-size:14px; font-weight:600;
-        cursor:pointer; text-decoration:none; white-space:nowrap;
-        font-family:inherit; line-height:1;
-      }}
-      .btn-outline::before {{
-        content:""; display:inline-block; width:15px; height:15px;
-        margin-right:7px; flex-shrink:0;
-        background:url("data:image/svg+xml;base64,{_DL_B64}") no-repeat center/contain;
-      }}
-      .btn-outline:hover {{ background:#f9fafb; border-color:#d1d5db; color:#111827; }}
-      .btn-green {{
-        display:inline-flex; align-items:center;
-        background:#16a34a; color:white; border:none;
-        border-radius:12px; padding:9px 16px; font-size:14px; font-weight:600;
-        cursor:pointer; white-space:nowrap; font-family:inherit; line-height:1;
-        box-shadow:0 1px 3px rgba(0,0,0,.15);
-      }}
-      .btn-green::before {{
-        content:""; display:inline-block; width:15px; height:15px;
-        margin-right:7px; flex-shrink:0;
-        background:url("data:image/svg+xml;base64,{_UP_B64}") no-repeat center/contain;
-      }}
-      .btn-green:hover {{ background:#15803d; }}
-    </style>
-    <div class="hdr">
-      <div>
-        <h1>Import purchases</h1>
-        <p class="sub">Upload a CSV of your grocery receipts. Everything is parsed in your browser&nbsp;&mdash; nothing leaves this page.</p>
-      </div>
-      <div class="btns">
-        <a href="data:text/csv;base64,{_csv_b64}"
-           download="grocery-purchases-sample.csv"
-           class="btn-outline">Sample CSV</a>
-        <button class="btn-green"
-          onclick="try{{window.parent.document.querySelector('input[type=file]').click()}}catch(e){{}}">
-          Upload CSV
-        </button>
-      </div>
-    </div>
-    """)
+    col_title, col_btns = st.columns([1.7, 1], vertical_alignment="bottom")
+    with col_title:
+        st.markdown(
+            '<h1 style="font-size:24px;font-weight:700;color:#171717;letter-spacing:-0.3px;'
+            'margin:0 0 5px;line-height:1.25;">Import purchases</h1>'
+            '<p style="font-size:14px;color:#6b7280;margin:0 0 8px;line-height:1.5;">Upload a CSV '
+            'of your grocery receipts. Everything is parsed in your browser&nbsp;&mdash; nothing '
+            'leaves this page.</p>',
+            unsafe_allow_html=True,
+        )
+    with col_btns:
+        b_sample, b_upload = st.columns(2, gap="small")
+        with b_sample:
+            st.download_button(
+                "Sample CSV",
+                data=_sample_csv,
+                file_name="grocery-purchases-sample.csv",
+                mime="text/csv",
+                icon=":material/download:",
+                use_container_width=True,
+            )
+        with b_upload:
+            # Visual parity with the prototype's green button. The click handler
+            # opens the dropzone's file picker (best-effort; the dropzone below
+            # is also directly clickable).
+            st.html(
+                f"""<style>
+                  .btn-green {{
+                    display:inline-flex; align-items:center; justify-content:center; width:100%;
+                    background:#16a34a; color:white; border:none; border-radius:12px;
+                    padding:9px 16px; font-size:14px; font-weight:600; cursor:pointer;
+                    white-space:nowrap; line-height:1; box-shadow:0 1px 3px rgba(0,0,0,.15);
+                    font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Arial,sans-serif;
+                  }}
+                  .btn-green::before {{
+                    content:""; display:inline-block; width:15px; height:15px;
+                    margin-right:7px; flex-shrink:0;
+                    background:url("data:image/svg+xml;base64,{_UP_B64}") no-repeat center/contain;
+                  }}
+                  .btn-green:hover {{ background:#15803d; }}
+                </style>
+                <button class="btn-green"
+                  onclick="try{{window.parent.document.querySelector('input[type=file]').click()}}catch(e){{}}">
+                  Upload CSV
+                </button>"""
+            )
 
     # ── Dropzone visual overlay ───────────────────────────────────────
     # Only shown when no file is loaded; hides automatically after upload
     # so the file info chip shown by Streamlit's widget isn't obscured.
-    if st.session_state.get("source", "sample") == "sample":
+    # We read the uploader's widget state (populated before the script body
+    # runs) rather than `source`, which is only updated *after* this point —
+    # otherwise the overlay still renders on the rerun the file arrives and
+    # overlaps the file chip.
+    _has_upload = st.session_state.get("csv_uploader") is not None
+    if not _has_upload and st.session_state.get("source", "sample") == "sample":
       st.markdown(
         f"""<div style="
             text-align:center;
@@ -207,20 +188,33 @@ def render():
         "Drag & drop your CSV here",
         type=["csv"],
         label_visibility="collapsed",
+        key="csv_uploader",
     )
 
     if uploaded is not None:
-        df, err = load_upload(uploaded)
-        if err:
+        # Only parse when this is a newly-selected file. The widget keeps the
+        # same file across reruns; re-reading it each time is wasteful and can
+        # fail once the buffer is consumed.
+        file_id = f"{uploaded.name}:{getattr(uploaded, 'size', 0)}"
+        if st.session_state.get("loaded_file_id") != file_id:
+            df, err = load_upload(uploaded)
+            if err:
+                st.session_state["upload_error"] = err
+            else:
+                st.session_state.df = df
+                st.session_state.source = uploaded.name
+                st.session_state.import_limit = 40
+                st.session_state.loaded_file_id = file_id
+                st.session_state.pop("upload_error", None)
+                remember(df, uploaded.name)  # survive tab-nav page reloads
+
+        if st.session_state.get("upload_error"):
             st.markdown(
                 f'<div style="margin-top:10px;padding:10px 16px;border-radius:10px;'
                 f'background:#fef2f2;color:#b91c1c;font-size:14px;font-weight:500;'
-                f'border:1px solid #fecaca;">✕  {err}</div>',
+                f'border:1px solid #fecaca;">✕  {st.session_state["upload_error"]}</div>',
                 unsafe_allow_html=True,
             )
-        else:
-            st.session_state.df = df
-            st.session_state.source = uploaded.name
 
     df     = st.session_state.df
     source = st.session_state.source
@@ -260,6 +254,12 @@ def render():
         if st.button("↩  Reset to sample data", type="secondary"):
             st.session_state.df = load_sample()
             st.session_state.source = "sample"
+            # Clear the uploaded file so the dropzone overlay returns
+            st.session_state.pop("csv_uploader", None)
+            st.session_state.pop("loaded_file_id", None)
+            st.session_state.pop("upload_error", None)
+            st.session_state.import_limit = 40
+            forget()  # drop the retained dataset from the cross-reload store
             st.rerun()
 
     # ── Purchase history card ──────────────────────────────────────────
@@ -274,6 +274,12 @@ def render():
     [data-testid="stVerticalBlockBorderWrapper"] > [data-testid="stVerticalBlock"] {
         padding: 0 !important;
         gap: 0 !important;
+    }
+    /* Table + divider rows must reach the card's side borders: kill the
+       horizontal padding Streamlit puts on each element container. */
+    [data-testid="stVerticalBlockBorderWrapper"] > [data-testid="stVerticalBlock"] > [data-testid="stElementContainer"] {
+        padding-left: 0 !important;
+        padding-right: 0 !important;
     }
     /* Column gap inside the card header row */
     [data-testid="stVerticalBlockBorderWrapper"] [data-testid="stHorizontalBlock"] {
@@ -297,8 +303,21 @@ def render():
         font-size: 13px !important;
         border-radius: 10px !important;
     }
-    /* Row hover */
+    /* Row separators + hover (match prototype) */
+    table tbody tr td { border-bottom: 1px solid #f5f5f5; }
     table tbody tr:hover { background-color: rgba(0,0,0,0.018); }
+    /* "Show more": green text link button spanning the card footer */
+    [data-testid="stVerticalBlockBorderWrapper"] .stButton button {
+        background: transparent !important;
+        border: none !important;
+        color: #15803d !important;
+        font-weight: 600 !important;
+        font-size: 14px !important;
+    }
+    [data-testid="stVerticalBlockBorderWrapper"] .stButton button:hover {
+        background: #f0fdf4 !important;
+        color: #166534 !important;
+    }
     </style>
     """, unsafe_allow_html=True)
 
@@ -339,7 +358,7 @@ def render():
 
         with col_head:
             st.markdown(
-                f'<div style="padding:14px 16px 10px;">'
+                f'<div style="padding:14px 20px 10px;">'
                 f'<div style="display:flex;align-items:center;gap:8px;">'
                 f'{_ICON_LIST}'
                 f'<div>'
@@ -355,9 +374,14 @@ def render():
             unsafe_allow_html=True,
         )
 
+        # Pagination — show a page of rows + "Show more" (matches prototype,
+        # which renders 40 rows at a time rather than one long scroll box).
+        limit = st.session_state.get("import_limit", 40)
+        page = filtered.iloc[:limit]
+
         # Table rows
         rows_html = ""
-        for _, r in filtered.iterrows():
+        for _, r in page.iterrows():
             date_s = _fmt_date(r["date"]) if hasattr(r["date"], "strftime") else str(r["date"])[:10]
             rows_html += (
                 "<tr>"
@@ -370,22 +394,46 @@ def render():
                 "</tr>"
             )
 
-        _THL = 'style="text-align:left;padding:10px 20px;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#9ca3af;white-space:nowrap;"'
-        _THR = 'style="text-align:right;padding:10px 20px;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#9ca3af;white-space:nowrap;"'
+        # Header: DATE shows the active-sort state (green + chevron) like the
+        # prototype; rows are pre-sorted newest-first in utils.data._clean.
+        _chevron = (
+            '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#15803d" '
+            'stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" '
+            'style="vertical-align:middle;margin-left:3px;"><path d="M6 9l6 6 6-6"/></svg>'
+        )
+        _TH = ('padding:10px 20px;font-size:11px;font-weight:700;letter-spacing:.06em;'
+               'text-transform:uppercase;white-space:nowrap;')
+        header_html = (
+            f'<th style="text-align:left;{_TH}color:#15803d;">Date{_chevron}</th>'
+            f'<th style="text-align:left;{_TH}color:#9ca3af;">Store</th>'
+            f'<th style="text-align:left;{_TH}color:#9ca3af;">Item</th>'
+            f'<th style="text-align:left;{_TH}color:#9ca3af;">Category</th>'
+            f'<th style="text-align:right;{_TH}color:#9ca3af;">Qty</th>'
+            f'<th style="text-align:right;{_TH}color:#9ca3af;">Price</th>'
+        )
         st.markdown(
-            f"""<div style="max-height:520px;overflow-y:auto;">
-            <table style="width:100%;border-collapse:collapse;">
+            f"""<table style="width:100%;border-collapse:collapse;">
               <thead>
                 <tr style="background:#fafafa;border-bottom:1px solid #f3f4f6;">
-                  <th {_THL}>Date</th>
-                  <th {_THL}>Store</th>
-                  <th {_THL}>Item</th>
-                  <th {_THL}>Category</th>
-                  <th {_THR}>Qty</th>
-                  <th {_THR}>Price</th>
+                  {header_html}
                 </tr>
               </thead>
               <tbody>{rows_html}</tbody>
-            </table></div>""",
+            </table>""",
             unsafe_allow_html=True,
         )
+
+        # "Show 40 more" footer button when more rows remain
+        remaining = len(filtered) - limit
+        if remaining > 0:
+            st.markdown(
+                '<div style="border-top:1px solid #f3f4f6;"></div>',
+                unsafe_allow_html=True,
+            )
+            if st.button(
+                f"Show 40 more ({remaining} remaining)",
+                key="import_show_more",
+                use_container_width=True,
+            ):
+                st.session_state.import_limit = limit + 40
+                st.rerun()
