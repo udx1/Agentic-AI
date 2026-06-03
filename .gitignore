@@ -1,0 +1,4 @@
+﻿Cartwise/.venv/
+Cartwise/__pycache__/
+Cartwise/.streamlit/secrets.toml
+*.pyc

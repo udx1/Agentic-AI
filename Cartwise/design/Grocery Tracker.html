@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Cartwise — Grocery Tracker</title>
+<template id="__bundler_thumbnail">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" fill="#16a34a"/><g fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><path d="M30 30h6l6 30h24l6-22H40"/><circle cx="44" cy="68" r="3.2"/><circle cx="64" cy="68" r="3.2"/></g></svg>
+</template>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/papaparse@5.4.1/papaparse.min.js"></script>
+<script src="https://unpkg.com/prop-types@15.8.1/prop-types.min.js"></script>
+<script src="https://unpkg.com/react-is@18.3.1/umd/react-is.production.min.js"></script>
+<script src="https://unpkg.com/recharts@2.12.7/umd/Recharts.js"></script>
+<script>
+  // Silence Recharts 2.x's internal defaultProps deprecation warnings (React 18). Not from our code.
+  (function () {
+    const orig = console.error;
+    console.error = function (...args) {
+      const s = typeof args[0] === "string" ? args[0] : "";
+      if (s.includes("defaultProps will be removed")) return;
+      orig.apply(console, args);
+    };
+  })();
+  tailwind.config = {
+    theme: {
+      extend: {
+        fontFamily: {
+          sans: ['ui-sans-serif', 'system-ui', '-apple-system', 'Segoe UI', 'Helvetica Neue', 'Arial', 'sans-serif'],
+          mono: ['ui-monospace', 'SFMono-Regular', 'Menlo', 'monospace'],
+        },
+      },
+    },
+  };
+</script>
+<style>
+  html, body { margin: 0; -webkit-font-smoothing: antialiased; }
+  body { font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", "Helvetica Neue", Arial, sans-serif; }
+  .recharts-text { font-family: inherit; }
+  .recharts-surface { outline: none; }
+  ::-webkit-scrollbar { height: 8px; width: 8px; }
+  ::-webkit-scrollbar-thumb { background: #d4d4d4; border-radius: 8px; }
+</style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel" src="tweaks-panel.jsx"></script>
+  <script src="gt-data.js"></script>
+  <script type="text/babel" src="gt-ui.jsx"></script>
+  <script type="text/babel" src="gt-charts.jsx"></script>
+  <script type="text/babel" src="gt-import.jsx"></script>
+  <script type="text/babel" src="gt-dashboard.jsx"></script>
+  <script type="text/babel" src="gt-predict.jsx"></script>
+  <script type="text/babel" src="gt-app.jsx"></script>
+</body>
+</html>
