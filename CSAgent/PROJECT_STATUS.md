@@ -1,325 +1,227 @@
 # Project Status
 
+Last checked: 2026-06-11
+
 ## Current Goal
 
-Build a local-first ecommerce site using a 50-product subset from the UCSD Amazon Electronics dataset, then extend it with a RAG-based customer support chat agent.
+Build a local-first ecommerce site using a 50-product subset from the UCSD Amazon Electronics dataset, then extend it with a RAG-based customer support chat agent and local ticket workflow.
 
-## Current Phase
+## Current Status
 
-Phase 6 RAG Pipeline is complete.
+Phases 0 through 9 are complete.
 
-Phase 7 Support Chat Agent is complete:
+The app now includes:
 
-- `POST /chat` exists in FastAPI.
-- The endpoint is now backed by a LangGraph support-agent workflow.
-- The workflow classifies intent, plans retrieval, retrieves context, assesses context sufficiency, answers with citations, asks for clarification, or prepares escalation.
-- The endpoint keeps the existing public response shape: `question`, `answer`, `provider`, `citations`, and `retrievedContext`.
-- The first LangGraph implementation remains deterministic and works without an LLM chat-completion call.
-
-Phase 8 Chat UI / frontend support chat integration is complete:
-
-```text
-- The React frontend has a floating support chat panel available from the header.
-- The panel calls the LangGraph-backed backend POST /chat endpoint with provider nebius.
-- Assistant answers render with citations, retrieved source snippets, loading and error states.
-- Product detail pages offer product-aware starter prompts.
-- Developer trace mode is hidden by default and unlocked with ?eval=z.
-- Citations, retrieved context, and debug traces are shown only in eval/developer mode, not normal support mode.
-- Eval/developer evidence is enabled by default when the frontend URL includes `?eval=z`.
-- Frontend evidence rendering now matches the backend API field names: label, docType, and snippet.
-- Catalog availability questions such as `Is IBM Laptop available?` are answered from `data/catalog/products.json`, with related catalog matches when an exact brand/product is not present.
-```
+- React/Vite ecommerce frontend with catalog browsing, product detail pages, search, sorting, category filtering, cart behavior, and a floating support chat panel.
+- FastAPI backend with catalog endpoints, LangGraph-backed `POST /chat`, and local support ticket APIs.
+- RAG pipeline using LangChain, Chroma, and Nebius embeddings for the current local vector store.
+- Deterministic support-agent workflow for intent classification, retrieval planning, context sufficiency checks, catalog answers, clarification, escalation, ticket handoff, and fallback answer formatting.
+- Local ticket persistence for confirmed handoffs, plus a lightweight internal ticket console.
 
 Current active phase:
 
 ```text
-Phase 9: Ticket persistence and support workflow extensions
+Phase 9: Ticket persistence and support workflow extensions is complete.
+Post-Phase-9 RAG enhancement work has started with LLM prompt/persona final-answer generation.
 ```
 
-Current blocker for OpenAI embeddings:
+## Latest Execution Check
+
+Run from the repo on 2026-06-11:
+
+```powershell
+cd backend
+uv run python ../rag_pipeline/validate_support_agent.py
+uv run python ../rag_pipeline/validate_ticket_workflow.py
+
+cd ../frontend
+npm run build
+```
+
+Results:
+
+- `validate_support_agent.py`: passed 19 support-agent cases.
+- `validate_ticket_workflow.py`: passed CRUD, ID generation, filtering, updates, and idempotent chat handoff validation.
+- `npm run build`: passed; Vite production build completed.
+
+Known warning:
+
+- FastAPI `TestClient` emits a Starlette deprecation warning about `httpx`; it does not currently block validation.
+
+## Running Locally
+
+See `docs/local-runbook.md` for start, stop, URL, and quick validation commands.
+
+Key URLs:
+
+Eval/developer evidence mode:
 
 ```text
-The current OPENAI_API_KEY can list available models, including text-embedding-3-small,
-but actual embedding requests return 429 insufficient_quota. Add billing/credits or
-switch to an OpenAI key/project with usable API quota before running the OpenAI
-embedding pass.
+http://127.0.0.1:5173/?_m=e
 ```
 
-Current working provider:
+Internal support-ticket console:
 
 ```text
-Use Chroma as the local vector database. The current Chroma collection was built
-with Nebius embeddings. The local deterministic hashing provider remains available,
-but Chroma must be rebuilt with `--provider hashing` before retrieval or answer
-previews can use hashing embeddings.
+http://127.0.0.1:5173/?_m=s#/support/tickets
 ```
 
-Chat-completion provider:
+## Current API Surface
 
-```text
-Use Claude through Anthropic for natural final support answers. Keep Nebius as the
-current embedding provider for retrieval. Claude is called after retrieval and
-context sufficiency pass, preserving the existing /chat response shape and keeping
-deterministic answer formatting as a fallback.
-```
+Catalog:
 
-Nebius status:
+- `GET /health`
+- `GET /products`
+- `GET /products/{id}`
+- `GET /categories`
 
-```text
-Nebius API access works through backend/.env. The available embedding model
-Qwen/Qwen3-Embedding-8B returns 4096-dimensional embeddings. The full 907-chunk
-Chroma build completed successfully in about 19 minutes.
-```
+Support chat:
 
-## Key Decisions
+- `POST /chat`
+- Request body includes `question`, `provider`, optional `debug`, optional `createTicket`, and optional `ticketRequestId`.
+- Default working provider is `nebius`.
+- Response preserves the public shape with `question`, `answer`, `provider`, `citations`, and `retrievedContext`.
+- Handoff responses can include `handoff`; confirmed ticket creation returns `createdTicket`.
 
-- Use the Electronics category.
-- Start with a clean subset of 50 products.
-- Build locally first.
-- Use the ecommerce site as the baseline UI.
-- Add a support chat agent later using a RAG pipeline.
-- Build the RAG pipeline with LangChain.
-- Build the support agent workflow with LangGraph.
-- Use Chroma first for local vector search.
-- Keep Pinecone as a later cloud vector database option.
-- Since the dataset does not include manuals, FAQs, or support tickets, create a synthetic support knowledge base tied to the selected products.
-- Bring in 5-6 clean real customer reviews per selected product during Phase 5, stored separately from the product catalog.
+Tickets:
 
-## Planned Stack
+- `POST /tickets`
+- `GET /tickets`
+- `GET /tickets/{ticket_id}`
+- `PATCH /tickets/{ticket_id}`
 
-- Frontend: React/Vite
-- Backend: FastAPI managed with `uv`
-- Data: local JSON and markdown files
-- RAG framework: LangChain
-- Agent workflow framework: LangGraph
-- Local vector store: Chroma
-- Cloud vector store option: Pinecone
-- Models: Nebius embeddings currently; Claude chat-completion answer generation; OpenAI remains optional after quota is available
+Runtime tickets are stored in `data/support/runtime_tickets.json`. Seed tickets remain read-only in `data/support/tickets.json`.
 
-## Phase 0 Completed Setup
+## Phase Summary
 
-- Created the initial folder structure.
-- Added build and learning docs.
-- Initialized `backend/` as a `uv` project.
-- Added FastAPI and Uvicorn backend dependencies.
-- Added a starter FastAPI app with `GET /health`.
-- Kept the frontend plan as React/Vite for Phase 2.
+### Phase 0: Setup
 
-## Phase 1 Completed Data Layer
+Complete. Created the project structure, backend `uv` project, starter FastAPI app, and planning docs.
 
-- Used the UCSD/McAuley Lab Amazon Reviews 2023 Electronics metadata.
-- Added `backend/scripts/build_catalog.py`.
-- Added `backend/scripts/validate_catalog.py`.
-- Generated `data/catalog/products.json` with 50 normalized products.
-- Saved selected source records to `data/raw/electronics_sample.jsonl`.
-- Documented the source in `docs/data-source.md`.
-- Documented the normalized schema in `docs/catalog-schema.md`.
+### Phase 1: Data Layer
 
-## Phase 2 Completed UI Baseline
+Complete. Built a normalized 50-product Electronics catalog from the UCSD/McAuley Lab Amazon Reviews 2023 metadata.
 
-- Created the React/Vite frontend project in `frontend/`.
-- Initially used local frontend catalog data for the UI baseline.
-- Built a product listing page.
-- Built reusable product cards.
-- Built a product detail view using hash-based navigation.
-- Added responsive CSS for desktop and mobile layouts.
-- Verified `npm run build` succeeds.
-- Started the local dev server at `http://127.0.0.1:5173/`.
+Key files:
 
-## Phase 3 Completed Frontend Logic
+- `backend/scripts/build_catalog.py`
+- `backend/scripts/validate_catalog.py`
+- `data/catalog/products.json`
+- `data/catalog/categories.json`
+- `docs/data-source.md`
+- `docs/catalog-schema.md`
 
-- Added search across title, brand, category, subcategory, and description.
-- Kept department navigation as category filtering.
-- Added sorting by featured order, price, rating, and review count.
-- Added a local cart panel.
-- Added product card and product detail add-to-cart actions.
-- Added cart quantity increase, decrease, direct edit, and remove behavior.
-- Verified `npm run build` succeeds.
+### Phase 2: UI Baseline
 
-## Phase 4 Completed Backend API
+Complete. Created the React/Vite frontend with product listing, reusable cards, product detail views, responsive layout, and local build verification.
 
-- Added FastAPI product and category response models.
-- Added `GET /products`.
-- Added `GET /products/{id}`.
-- Added `GET /categories`.
-- Added CORS for the local Vite frontend.
-- Served catalog data from `data/catalog/products.json` and `data/catalog/categories.json`.
-- Updated the frontend to fetch products and categories from FastAPI.
-- Removed duplicate frontend catalog JSON files.
-- Started the backend API at `http://127.0.0.1:8000/`.
+### Phase 3: Frontend Logic
 
-## Phase 5 Completed Local Support Knowledge Base
+Complete. Added search, category filtering, sorting, and local cart behavior.
 
-- Added `backend/scripts/build_reviews.py`.
-- Added `backend/scripts/build_support_kb.py`.
-- Added `backend/scripts/validate_support_kb.py`.
-- Extracted real customer review samples to `data/reviews/product_reviews.json`.
-- Saved raw review sample records to `data/raw/electronics_review_sample.jsonl`.
-- Generated 250 product KB markdown documents under `data/knowledge_base/products/`.
-- Generated 4 store policy markdown documents under `data/knowledge_base/store_policies/`.
-- Generated 20 synthetic support tickets in `data/support/tickets.json`.
-- Documented the KB in `docs/knowledge-base.md`.
-- Validated the KB successfully.
+### Phase 4: Backend API
 
-Review extraction coverage:
+Complete. Added FastAPI product/category models and endpoints, CORS, and frontend API integration.
 
-- Products with at least one clean review sample: 39 of 50
-- Products with 6 or more clean review samples: 17 of 50
+### Phase 5: Support Knowledge Base
 
-## Phase 6 RAG Pipeline Completed
+Complete. Built product KB documents, store policy docs, review samples, and synthetic seed tickets.
 
-Completed:
+Current KB inventory:
 
-- Created root-level `rag_pipeline/` folder for RAG-specific code.
-- Added `rag_pipeline/rag_pipeline_walkthrough.ipynb` as the step-by-step learning notebook.
-- Added source inventory script: `rag_pipeline/inspect_knowledge_sources.py`.
-- Added document loader: `rag_pipeline/document_loader.py`.
-- Added normalization layer: `rag_pipeline/text_normalizer.py`.
-- Added LangChain chunking with `RecursiveCharacterTextSplitter`: `rag_pipeline/chunking.py`.
-- Added chunk preview script: `rag_pipeline/preview_chunks.py`.
-- Added OpenAI embedding layer with LangChain `OpenAIEmbeddings`: `rag_pipeline/embeddings.py`.
-- Added embedding preview script: `rag_pipeline/preview_embeddings.py`; it now defaults to a small in-memory preview sample.
-- Added local deterministic hashing embeddings as a backup provider.
-- Added Nebius embedding provider support using the OpenAI-compatible API.
-- Added Nebius access and embedding check scripts.
-- Added Chroma vector store utilities: `rag_pipeline/vector_store.py`.
-- Added Chroma build script: `rag_pipeline/build_vector_store.py`.
-- Added hybrid retrieval layer: `rag_pipeline/retrieval.py`.
-- Added retrieval preview script: `rag_pipeline/preview_retrieval.py`.
-- Added deterministic grounded answer formatting: `rag_pipeline/answer_generation.py`.
-- Added answer/citation preview script: `rag_pipeline/preview_answers.py`.
-- Added backend chat endpoint: `POST /chat`.
-- Added `--provider` flags for embedding, vector-store, retrieval preview, and answer preview scripts.
-- Split the learning flow into embedding preview, full embedding/indexing/Chroma store, retrieval, and answer preview.
-- Set the retrieval default embedding provider to `nebius` to match the current Chroma collection.
-- Fixed chunk ID generation so customer reviews and support tickets produce unique Chroma IDs.
-- Added `langchain-text-splitters`, `langchain-openai`, `langchain-chroma`, and `truststore` dependencies to the backend uv project.
+- 50 selected products.
+- 145 review samples.
+- 250 product KB markdown files.
+- 4 store policy markdown files.
+- 20 original synthetic seed tickets, with current source inventory reporting 25 support-ticket documents.
 
-Verified outputs:
+### Phase 6: RAG Pipeline
 
-```text
-Document inventory:
-- Products: 50
-- Categories: 5
-- Review samples: 145
-- KB markdown docs: 254
-- Support tickets: 25
+Complete. Added document loading, normalization, chunking, embeddings, Chroma vector-store utilities, hybrid retrieval, answer generation, preview scripts, and the first backend chat endpoint.
 
-Chunking:
-- Normalized documents: 479
-- Chunks: 907
-- Unique chunk IDs: 907
-- Chunk size: 900
-- Chunk overlap: 150
+Current vector-store status:
 
-Local backup embeddings:
-- Provider: local-hashing
-- Dimension: 384
-- Embedded chunks: 907
+- Vector database: Chroma.
+- Collection: `csagent_support_knowledge`.
+- Persist directory: `data/vector_store/chroma`.
+- Stored chunks: 907.
+- Current collection embedding provider: Nebius.
+- Nebius model: `Qwen/Qwen3-Embedding-8B`.
+- Embedding dimension: 4096.
 
-Nebius embeddings:
-- Provider: nebius
-- Model: Qwen/Qwen3-Embedding-8B
-- Dimension: 4096
-- Preview embedding default: first 5 chunks
-- Full Chroma build: 907 embedded chunks
-- Full Chroma build time: about 19 minutes
+### Phase 7: LangGraph Support Agent
 
-Chroma:
-- Collection: csagent_support_knowledge
-- Persist directory: data/vector_store/chroma
-- Stored chunks: 907
-- Vector database: Chroma
-- Embedding provider used to build current collection: nebius
+Complete. `POST /chat` now uses `run_support_agent(...)` from `rag_pipeline/support_agent.py`.
 
-Retrieval:
-- `preview_retrieval.py --provider nebius` returns `returns.md` for a return-policy question.
-- It returns troubleshooting documents for a power/troubleshooting question.
-- It returns Bluetooth-related product documents for a Bluetooth compatibility question.
+The agent handles:
 
-Answer generation:
-- `preview_answers.py --provider nebius` produces grounded answers with numbered citations.
-- Citations include a readable source label, source path, document type, product id when available, and chunk id.
-- The current answer layer is deterministic and extractive, so it works without an LLM chat-completion call.
+- Store policy questions.
+- Product questions.
+- Troubleshooting.
+- Compatibility.
+- Comparisons.
+- Review summaries.
+- Catalog availability.
+- Catalog ranking.
+- Clarification requests.
+- Escalation/handoff candidates.
+- Unsupported categories.
 
-Backend chat:
-- `POST /chat` now calls `run_support_agent(...)`.
-- Request body: `{ "question": "...", "provider": "nebius" }`.
-- Response includes `answer`, `citations`, and `retrievedContext`.
-- Verified with FastAPI `TestClient` using a return-policy question.
-- Verified from the Python walkthrough notebook using a FastAPI `TestClient`.
-```
-
-## Phase 7 Support Chat Agent Completed
-
-Completed:
-
-- Added `langgraph` to the backend dependencies.
-- Added `rag_pipeline/support_agent.py`.
-- Defined typed agent state, intent labels, escalation metadata, and support-agent result objects.
-- Added deterministic intent classification for store policy, product questions, troubleshooting, compatibility, comparison, review summaries, clarification, escalation, and unsupported categories.
-- Added product hints from product IDs, titles, brands, categories, and subcategories.
-- Added retrieval planning by intent while reusing `retrieve_relevant_chunks(...)`.
-- Added context sufficiency checks based on lexical score and expected document-type coverage.
-- Refactored answer formatting with `build_cited_answer_from_results(...)` so the graph can reuse retrieved chunks without duplicate retrieval.
-- Added clarification behavior for vague or underspecified questions.
-- Added escalation preparation for account/order-specific questions, urgent safety-related language, and weak-context handoff.
-- Added unsupported-category handling so apparel/clothing questions do not cite electronics policy documents.
-- Assembled and compiled a LangGraph workflow with classify, retrieve, assess, answer, clarify, and escalate nodes.
-- Added `run_support_agent(question, provider)`.
-- Updated `POST /chat` to call `run_support_agent(...)` while preserving the existing API response shape.
-- Added repeatable validation script: `rag_pipeline/validate_support_agent.py`.
-- Updated `rag_pipeline/rag_pipeline_walkthrough.ipynb` through the LangGraph design, node, API, and validation steps.
-
-Current validation command:
+Validation command:
 
 ```powershell
 cd backend
 uv run python ../rag_pipeline/validate_support_agent.py
 ```
 
-Current validation coverage:
+### Phase 8: Chat UI
 
-- Return-policy question
-- Product setup question
-- Troubleshooting question
-- Comparison question
-- Catalog availability question
-- Underspecified clarification question
-- Order-specific escalation question
-- Unsupported category question
+Complete. The React frontend includes a floating support chat panel wired to the LangGraph-backed backend.
 
-Validation result:
+Current behavior:
 
-```text
-Validated 8 support-agent cases.
-```
+- Normal support mode hides citations, retrieved context, and debug traces.
+- Eval mode (`?_m=e`) shows citations, retrieved snippets, and debug metadata.
+- Product detail pages include product-aware starter prompts.
+- Catalog availability and ranking questions are answered from `data/catalog/products.json`.
+- Contact-number requests and account/order-specific questions are handled as handoff candidates without inventing support contact data.
 
-Deferred or dependent:
+### Phase 9: Ticket Persistence And Support Workflow
 
-- OpenAI remains blocked by quota for embeddings; Nebius is currently available for embeddings.
-- Ticket persistence and full ticket-management endpoints remain Phase 9.
+Complete. Confirmed chat handoffs can become persisted local support tickets.
 
-Embedding execution status:
+Completed scope:
 
-- The first embedding run hit a Windows TLS/certificate issue.
-- Added `truststore` and configured the embedding code to use system certificates.
-- Added `check_embedding_ctx_length=False` to avoid `tiktoken` downloading tokenizer data before the API call.
-- After those fixes, the request reached OpenAI successfully.
-- Verified the current key can list models when `truststore` is injected.
-- The current key can see `text-embedding-3-small`, `text-embedding-3-large`, and chat models.
-- Actual OpenAI embedding requests still return `429 insufficient_quota`, so the account/project does not currently have usable embedding quota.
+- Ticket schema in `backend/app/ticket_schema.py`.
+- Ticket repository in `backend/app/ticket_repository.py`.
+- Runtime ticket storage in `data/support/runtime_tickets.json`.
+- Ticket APIs for create/list/detail/update.
+- Chat handoff metadata and optional confirmed ticket creation through `POST /chat`.
+- Idempotent ticket creation with `ticketRequestId` / `idempotencyKey`.
+- Frontend handoff ticket creation and confirmation UI.
+- Internal support console at `?_m=s#/support/tickets`.
+- First-contact-resolution eval dataset in `data/support/support_eval_queries.json`.
+- Ticket workflow validation in `rag_pipeline/validate_ticket_workflow.py`.
 
-Resume command after adding billing/credits or switching to a key with quota:
+Detailed Phase 9 documentation:
 
-```powershell
-cd backend
-uv run python ../rag_pipeline/preview_embeddings.py
-```
+- `docs/phase-9-support-workflow-tasks.md`
+- `docs/ticket-schema.md`
+- `docs/first-contact-resolution-eval.md`
+- `docs/local-runbook.md`
+- `docs/test-case-report.csv`
 
-If the new key is loaded correctly and has quota, this should generate embeddings for 907 chunks using `text-embedding-3-small`.
+## Provider Status
 
-Current local backup commands:
+### Working Provider
+
+Use Chroma with Nebius embeddings for the current local RAG workflow. The current Chroma collection was built with Nebius embeddings.
+
+### Local Backup Provider
+
+The deterministic hashing provider remains available for local backup runs, but Chroma must be rebuilt with `--provider hashing` before retrieval or answer previews can use hashing embeddings.
+
+Backup commands:
 
 ```powershell
 cd backend
@@ -329,38 +231,76 @@ uv run python ../rag_pipeline/preview_retrieval.py --provider hashing
 uv run python ../rag_pipeline/preview_answers.py --provider hashing
 ```
 
-Nebius test commands:
+### OpenAI Embeddings
+
+OpenAI embeddings are currently blocked by quota.
+
+The current `OPENAI_API_KEY` can list available models, including `text-embedding-3-small`, but actual embedding requests return `429 insufficient_quota`. Add billing/credits or switch to an OpenAI key/project with usable quota before running the OpenAI embedding pass.
+
+Resume command after quota is available:
 
 ```powershell
 cd backend
-uv run python ../rag_pipeline/check_nebius_access.py
-uv run python ../rag_pipeline/check_nebius_embeddings.py
-uv run python ../rag_pipeline/preview_embeddings.py --provider nebius --limit 50
+uv run python ../rag_pipeline/preview_embeddings.py
 ```
 
-Full Nebius Chroma build command, when ready to wait for the slower run:
-Completed successfully:
+### Chat Completion
 
-```powershell
-cd backend
-uv run python ../rag_pipeline/build_vector_store.py --provider nebius
-uv run python ../rag_pipeline/preview_retrieval.py --provider nebius
-uv run python ../rag_pipeline/preview_answers.py --provider nebius
-```
+Claude through Anthropic is the natural-language final answer provider after retrieval and context sufficiency checks when `CLAUDE_API_KEY` or `ANTHROPIC_API_KEY` is available.
 
-## Planned Structure
+The final-answer path now uses LangChain `ChatPromptTemplate` in `rag_pipeline/answer_generation.py`:
 
-```text
-data/
-  raw/
-  catalog/
-  reviews/
-  knowledge_base/
-  support/
-docs/
-frontend/
-backend/
-```
+- A system prompt defines the support persona: calm, concise, practical, customer-friendly, and honest about local-demo limits.
+- A human prompt injects the customer question and retrieved cited source context.
+- The LLM is instructed to use only supplied retrieved/catalog context and preserve bracketed citation numbers.
+- Deterministic answer formatting remains the fallback when no Claude key is configured or the LLM call fails.
+
+## Key Decisions
+
+- Use the Electronics category.
+- Start with a clean subset of 50 products.
+- Build locally first.
+- Keep the ecommerce site as the baseline UI.
+- Use LangChain for the RAG pipeline.
+- Use LangGraph for support-agent workflow orchestration.
+- Use Chroma first for local vector search.
+- Keep Pinecone as a later cloud vector database option.
+- Keep runtime support tickets separate from synthetic seed tickets.
+- Do not invent phone numbers, account records, tracking data, payment data, or order status.
+
+## Planned Stack
+
+- Frontend: React/Vite
+- Backend: FastAPI managed with `uv`
+- Data: local JSON and markdown files
+- RAG framework: LangChain
+- Agent workflow framework: LangGraph
+- Local vector store: Chroma
+- Current embedding provider: Nebius
+- Planned chat-completion provider: Claude through Anthropic
+- Cloud vector-store option: Pinecone
+
+## Important Files
+
+- `backend/app/main.py`
+- `backend/app/ticket_schema.py`
+- `backend/app/ticket_repository.py`
+- `frontend/src/main.jsx`
+- `frontend/src/styles.css`
+- `rag_pipeline/support_agent.py`
+- `rag_pipeline/validate_support_agent.py`
+- `rag_pipeline/validate_ticket_workflow.py`
+- `rag_pipeline/retrieval.py`
+- `rag_pipeline/answer_generation.py`
+- `data/catalog/products.json`
+- `data/catalog/categories.json`
+- `data/support/tickets.json`
+- `data/support/runtime_tickets.json`
+- `data/support/support_eval_queries.json`
+- `docs/phase-9-support-workflow-tasks.md`
+- `docs/ticket-schema.md`
+- `docs/first-contact-resolution-eval.md`
+- `docs/stakeholder-deck/csagent-stakeholder-deck.html`
 
 ## Existing Planning Documents
 
@@ -376,79 +316,23 @@ backend/
 - `docs/phase-6-rag-pipeline-tasks.md`
 - `docs/phase-7-langgraph-tasks.md`
 - `docs/phase-8-chat-ui-tasks.md`
+- `docs/phase-9-support-workflow-tasks.md`
+- `docs/first-contact-resolution-eval.md`
+- `docs/ticket-schema.md`
 
 ## Next Steps
 
-1. Start Phase 9 ticket persistence and support workflow extensions.
-2. Add ticket storage for escalation cases.
-3. Consider ticket-management endpoints for listing and reviewing support handoffs.
-4. Add the catalog-ranking intent for questions such as `List top 5 products with highest reviews`.
-5. Keep developer/debug trace mode available for observability and eval.
-6. Rebuild Chroma with OpenAI embeddings later only if switching away from Nebius.
-7. Keep Pinecone as a later cloud vector database option.
+1. Add product-manual-style documents or manual excerpts as a first-class document type.
+2. Build the first-contact-resolution eval runner using `data/support/support_eval_queries.json`.
+3. Expand LLM answer validation once a Claude/Anthropic key is available in the environment.
+4. Keep deterministic answer formatting as the fallback when the LLM provider is unavailable.
+5. Rebuild Chroma with OpenAI embeddings later only if switching away from Nebius.
+6. Keep Pinecone as a later cloud vector database option.
 
-## Notes For Next Session
+## Local-First Limitations
 
-Before starting Phase 9 support workflow extensions, review:
-
-- `rag-ecommerce-plan.md`
-- `PROJECT_STATUS.md`
-- `docs/build-plan.md`
-- `docs/learning-notes.md`
-- `docs/phase-7-langgraph-tasks.md`
-- `docs/phase-8-chat-ui-tasks.md`
-- `docs/catalog-schema.md`
-- `data/catalog/products.json`
-- `frontend/src/main.jsx`
-- `frontend/src/styles.css`
-- `backend/app/main.py`
-- `data/catalog/categories.json`
-- `docs/knowledge-base.md`
-- `data/knowledge_base/`
-- `data/reviews/product_reviews.json`
-- `data/support/tickets.json`
-- `rag_pipeline/support_agent.py`
-- `rag_pipeline/validate_support_agent.py`
-
-Then continue with ticket persistence and support workflow extensions.
-
-RAG and LangGraph agent behavior are now available through `POST /chat`, and the React frontend exposes that behavior through the support chat panel. Ticket fallback and ticket persistence are the next backend/product workflow steps.
-
-Developer/debug trace mode:
-
-- Added an explicitly enabled frontend developer-mode toggle in the support chat composer, unlocked only when the frontend URL includes `?eval=z`.
-- When the URL includes `?eval=z`, developer mode is enabled by default and the frontend sends an optional `debug: true` flag with chat requests.
-- Extended `POST /chat` to optionally return intent classification, product hints, retrieval plan, context sufficiency decision, retrieval scores, selected chunks, and graph path metadata.
-- Rendered citations, retrieved context, and debug metadata in compact expandable eval/developer panels.
-- Developer mode remains hidden and disabled in normal support mode, and the frontend tolerates missing debug metadata.
-
-Catalog availability:
-
-- Added deterministic catalog availability handling for questions such as `Is IBM Laptop available?`.
-- Availability answers use `data/catalog/products.json` rather than RAG retrieval.
-- If an exact brand/product is absent, the answer says so and lists related catalog matches.
-
-Planned catalog-ranking enhancement:
-
-- Add a catalog-ranking intent for questions such as `List top 5 products with highest reviews`.
-- Answer ranking questions from `data/catalog/products.json` using deterministic sorting by `reviewCount`, `rating`, or `price`.
-- Keep ranking separate from RAG review-summary questions, which should remain product-specific.
-
-Most recent RAG/backend files to review after restart:
-
-- `rag_pipeline/rag_pipeline_walkthrough.ipynb`
-- `rag_pipeline/support_agent.py`
-- `rag_pipeline/validate_support_agent.py`
-- `rag_pipeline/embeddings.py`
-- `rag_pipeline/check_nebius_access.py`
-- `rag_pipeline/check_nebius_embeddings.py`
-- `rag_pipeline/preview_embeddings.py`
-- `rag_pipeline/vector_store.py`
-- `rag_pipeline/build_vector_store.py`
-- `rag_pipeline/retrieval.py`
-- `rag_pipeline/preview_retrieval.py`
-- `rag_pipeline/answer_generation.py`
-- `rag_pipeline/preview_answers.py`
-- `rag_pipeline/chunking.py`
-- `backend/app/main.py`
-- `backend/pyproject.toml`
+- Runtime tickets are stored in JSON, not a production database.
+- The support console is URL-mode-gated for local testing, not protected by authentication or authorization.
+- No real phone, email, SMS, CRM, notification, SLA, or operator-assignment integration exists.
+- Concurrent ticket writes are acceptable for local development, but production should use a database and transactional writes.
+- OpenAI embedding execution remains blocked until API quota is available.

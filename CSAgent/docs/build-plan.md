@@ -13,7 +13,7 @@ Build a local-first ecommerce site from a clean 50-product Electronics catalog, 
 - Agent workflow: LangGraph
 - Local vector store: Chroma
 - Later cloud vector option: Pinecone
-- Models: Nebius embeddings currently; OpenAI remains planned/optional after quota is available; chat model provider is still to be finalized
+- Models: Nebius embeddings currently; Claude is planned for chat-completion answer generation; OpenAI remains planned/optional after quota is available
 
 ## Phase Task Lists
 
@@ -26,6 +26,7 @@ Build a local-first ecommerce site from a clean 50-product Electronics catalog, 
 - `docs/phase-6-rag-pipeline-tasks.md`
 - `docs/phase-7-langgraph-tasks.md`
 - `docs/phase-8-chat-ui-tasks.md`
+- `docs/phase-9-support-workflow-tasks.md`
 
 ## Phase 0: Project Setup
 
@@ -171,16 +172,40 @@ Deferred or dependent:
 
 ## Phase 8: Chat UI
 
-Status: next
+Status: complete
 
 Deliverables:
 
-- Add a frontend support chat surface.
-- Call the backend `/chat` endpoint.
-- Display answer text and citations.
-- Add loading and error states.
-- Use `docs/phase-8-chat-ui-tasks.md` as the implementation checklist.
+- Added a floating frontend support chat panel.
+- Connected the panel to the backend `/chat` endpoint.
+- Added product-aware starter prompts, loading state, error state, and draft preservation.
+- Hid citations, retrieved context, and debug traces from normal support mode.
+- Added eval/developer mode with `?_m=e` for citations, retrieved context, and support-agent trace metadata.
+- Added catalog availability, catalog ranking, product-refinement, contact-handoff, and watch/accessory distinction handling.
+- Tightened catalog product cards and desktop grid layout to show five products per row when viewport width allows.
+- Use `docs/phase-8-chat-ui-tasks.md` as the completion record.
+
+## Phase 9: Support Workflow
+
+Status: complete
+
+Deliverables:
+
+- Added local ticket persistence for support handoffs.
+- Added ticket create/list/detail/update APIs.
+- Connected chat escalation/handoff responses to confirmed ticket creation.
+- Added retry-safe ticket creation with idempotency keys.
+- Added a frontend ticket confirmation flow.
+- Added a lightweight internal support console for reviewing and updating tickets.
+- Kept normal support mode customer-facing while eval mode continues to expose trace metadata.
+- Added deterministic issue-type and priority rules.
+- Added repeatable ticket-workflow validation.
+- Use `docs/phase-9-support-workflow-tasks.md` as the completion record.
 
 ## Later Phases
 
-- Phase 9: Ticket fallback
+- Optional cloud vector database with Pinecone
+- Optional production database for tickets
+- Optional authentication and operator assignment
+- LangChain `ChatPromptTemplate` final answer generation with an explicit LLM customer-support persona
+- Product manual/manual-excerpt knowledge documents indexed as a first-class retrieval source

@@ -1,0 +1,211 @@
+[
+  {
+    "id": "FCR-001",
+    "question": "What is the return policy if I opened an electronics item but still have all the packaging?",
+    "category": "store_policy",
+    "expectedIntent": "store_policy",
+    "expectedOutcome": "resolved",
+    "expectedFirstContactResolved": true,
+    "expectedEvidenceType": "store_policy",
+    "notes": "Policy question should be answerable from returns/refunds knowledge."
+  },
+  {
+    "id": "FCR-002",
+    "question": "How long does shipping usually take for electronics orders?",
+    "category": "store_policy",
+    "expectedIntent": "store_policy",
+    "expectedOutcome": "resolved",
+    "expectedFirstContactResolved": true,
+    "expectedEvidenceType": "store_policy",
+    "notes": "General shipping policy should be answerable without handoff."
+  },
+  {
+    "id": "FCR-003",
+    "question": "Does the Gateway 15.6 inch laptop come with Microsoft 365?",
+    "category": "product_question",
+    "expectedIntent": "product_question",
+    "expectedOutcome": "resolved",
+    "expectedFirstContactResolved": true,
+    "expectedEvidenceType": "catalog_product",
+    "productId": "B0BYBG1PPD",
+    "notes": "Catalog/product KB question should resolve from product context."
+  },
+  {
+    "id": "FCR-004",
+    "question": "How do I set up the JBL FLIP 5 Bluetooth speaker for first use?",
+    "category": "setup",
+    "expectedIntent": "product_question",
+    "expectedOutcome": "resolved",
+    "expectedFirstContactResolved": true,
+    "expectedEvidenceType": "setup",
+    "productId": "B08K2T4JFQ",
+    "notes": "Product setup question should retrieve setup/FAQ context."
+  },
+  {
+    "id": "FCR-005",
+    "question": "My Bluetooth speaker will not pair with my phone. What should I try first?",
+    "category": "troubleshooting",
+    "expectedIntent": "troubleshooting",
+    "expectedOutcome": "resolved",
+    "expectedFirstContactResolved": true,
+    "expectedEvidenceType": "troubleshooting",
+    "notes": "Generic troubleshooting should be answerable from support docs."
+  },
+  {
+    "id": "FCR-006",
+    "question": "Is the QGHXO Garmin Vivofit 4 band compatible with the Vivofit 4 tracker?",
+    "category": "compatibility",
+    "expectedIntent": "compatibility",
+    "expectedOutcome": "resolved",
+    "expectedFirstContactResolved": true,
+    "expectedEvidenceType": "compatibility",
+    "productId": "B07BJ7ZZL7",
+    "notes": "Compatibility question should resolve from product details or compatibility docs."
+  },
+  {
+    "id": "FCR-007",
+    "question": "Show me the cheapest products in the catalog.",
+    "category": "catalog_ranking",
+    "expectedIntent": "catalog_ranking",
+    "expectedOutcome": "resolved",
+    "expectedFirstContactResolved": true,
+    "expectedEvidenceType": "catalog_product",
+    "notes": "Deterministic catalog ranking should answer directly."
+  },
+  {
+    "id": "FCR-008",
+    "question": "Do you have IBM laptops available?",
+    "category": "catalog_availability",
+    "expectedIntent": "catalog_availability",
+    "expectedOutcome": "resolved",
+    "expectedFirstContactResolved": true,
+    "expectedEvidenceType": "catalog_product",
+    "notes": "Availability query should answer with exact absence plus related matches."
+  },
+  {
+    "id": "FCR-009",
+    "question": "Show me top rated watch bands, not watches.",
+    "category": "catalog_ranking",
+    "expectedIntent": "catalog_ranking",
+    "expectedOutcome": "resolved",
+    "expectedFirstContactResolved": true,
+    "expectedEvidenceType": "catalog_product",
+    "notes": "Accessory-aware ranking should return band/strap products."
+  },
+  {
+    "id": "FCR-010",
+    "question": "What do customers say about the PNY 1TB microSD card?",
+    "category": "review_summary",
+    "expectedIntent": "review_summary",
+    "expectedOutcome": "resolved",
+    "expectedFirstContactResolved": true,
+    "expectedEvidenceType": "customer_review",
+    "productId": "B0BSQL7M51",
+    "notes": "Review summary should retrieve review/customer feedback context."
+  },
+  {
+    "id": "FCR-011",
+    "question": "Where is my order? The tracking page has not updated.",
+    "category": "order_specific",
+    "expectedIntent": "escalation_candidate",
+    "expectedOutcome": "escalated",
+    "expectedFirstContactResolved": false,
+    "expectedTicketIssueType": "order",
+    "expectedTicketPriority": "normal",
+    "notes": "Order-specific data is unavailable and should escalate."
+  },
+  {
+    "id": "FCR-012",
+    "question": "My card was charged twice for this order.",
+    "category": "payment_specific",
+    "expectedIntent": "escalation_candidate",
+    "expectedOutcome": "escalated",
+    "expectedFirstContactResolved": false,
+    "expectedTicketIssueType": "payment",
+    "expectedTicketPriority": "high",
+    "notes": "Transaction-specific payment issue should escalate."
+  },
+  {
+    "id": "FCR-013",
+    "question": "The package was marked delivered, but I cannot find it anywhere.",
+    "category": "shipping_specific",
+    "expectedIntent": "escalation_candidate",
+    "expectedOutcome": "escalated",
+    "expectedFirstContactResolved": false,
+    "expectedTicketIssueType": "shipping",
+    "expectedTicketPriority": "high",
+    "notes": "Missing delivery should become high-priority shipping handoff."
+  },
+  {
+    "id": "FCR-014",
+    "question": "The product started smoking while charging and smells burnt.",
+    "category": "safety",
+    "expectedIntent": "escalation_candidate",
+    "expectedOutcome": "escalated",
+    "expectedFirstContactResolved": false,
+    "expectedTicketIssueType": "product_defect",
+    "expectedTicketPriority": "urgent",
+    "notes": "Safety language should trigger urgent product-defect handoff."
+  },
+  {
+    "id": "FCR-015",
+    "question": "The box is missing the USB cable accessory.",
+    "category": "missing_parts",
+    "expectedIntent": "escalation_candidate",
+    "expectedOutcome": "escalated",
+    "expectedFirstContactResolved": false,
+    "expectedTicketIssueType": "missing_parts",
+    "expectedTicketPriority": "normal",
+    "notes": "Missing accessory should create missing-parts handoff."
+  },
+  {
+    "id": "FCR-016",
+    "question": "I already tried troubleshooting, but the device still will not power on.",
+    "category": "repeated_troubleshooting",
+    "expectedIntent": "escalation_candidate",
+    "expectedOutcome": "escalated",
+    "expectedFirstContactResolved": false,
+    "expectedTicketIssueType": "troubleshooting",
+    "expectedTicketPriority": "high",
+    "notes": "Repeated unresolved troubleshooting should escalate."
+  },
+  {
+    "id": "FCR-017",
+    "question": "Can I have the support phone number?",
+    "category": "contact_request",
+    "expectedIntent": "escalation_candidate",
+    "expectedOutcome": "escalated",
+    "expectedFirstContactResolved": false,
+    "expectedTicketIssueType": "contact_request",
+    "expectedTicketPriority": "normal",
+    "notes": "Should not invent phone number; should offer ticket handoff."
+  },
+  {
+    "id": "FCR-018",
+    "question": "What is the return policy for opened running shoes?",
+    "category": "unsupported_category",
+    "expectedIntent": "unsupported_category",
+    "expectedOutcome": "clarification",
+    "expectedFirstContactResolved": false,
+    "notes": "Non-electronics category should not produce misleading electronics answer."
+  },
+  {
+    "id": "FCR-019",
+    "question": "Help",
+    "category": "underspecified",
+    "expectedIntent": "clarification_needed",
+    "expectedOutcome": "clarification",
+    "expectedFirstContactResolved": false,
+    "notes": "Underspecified query should ask a clarifying question."
+  },
+  {
+    "id": "FCR-020",
+    "question": "Can you compare the JBL FLIP 5 and JBL CLIP 3 speakers?",
+    "category": "comparison",
+    "expectedIntent": "comparison",
+    "expectedOutcome": "resolved",
+    "expectedFirstContactResolved": true,
+    "expectedEvidenceType": "catalog_product",
+    "notes": "Product comparison should answer from product/catalog/review context."
+  }
+]

@@ -4,7 +4,7 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Literal
 
-from fastapi import FastAPI, HTTPException
+from fastapi import Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
@@ -27,15 +27,32 @@ app.add_middleware(
 REPO_ROOT = Path(__file__).resolve().parents[2]
 CATALOG_DIR = REPO_ROOT / "data" / "catalog"
 REVIEWS_DIR = REPO_ROOT / "data" / "reviews"
+SUPPORT_DIR = REPO_ROOT / "data" / "support"
 PRODUCTS_PATH = CATALOG_DIR / "products.json"
 CATEGORIES_PATH = CATALOG_DIR / "categories.json"
 REVIEWS_PATH = REVIEWS_DIR / "product_reviews.json"
+SEED_TICKETS_PATH = SUPPORT_DIR / "tickets.json"
+RUNTIME_TICKETS_PATH = SUPPORT_DIR / "runtime_tickets.json"
 RAG_PIPELINE_DIR = REPO_ROOT / "rag_pipeline"
 
 if str(RAG_PIPELINE_DIR) not in sys.path:
     sys.path.append(str(RAG_PIPELINE_DIR))
 
 from support_agent import run_support_agent  # noqa: E402
+from app.ticket_repository import (  # noqa: E402
+    TicketNotFoundError,
+    TicketRepository,
+    TicketRepositoryError,
+)
+from app.ticket_schema import (  # noqa: E402
+    IssueType,
+    SupportTicket,
+    TicketCreateRequest,
+    TicketListFilters,
+    TicketPriority,
+    TicketStatus,
+    TicketUpdateRequest,
+)
 
 
 class Product(BaseModel):
@@ -74,6 +91,8 @@ class ChatRequest(BaseModel):
     question: str
     provider: Literal["hashing", "openai", "nebius"] = "nebius"
     debug: bool = False
+    createTicket: bool = False
+    ticketRequestId: str | None = None
 
 
 class ChatCitation(BaseModel):
@@ -102,6 +121,8 @@ class ChatResponse(BaseModel):
     provider: str
     citations: list[ChatCitation]
     retrievedContext: list[RetrievedContext]
+    handoff: dict | None = None
+    createdTicket: SupportTicket | None = None
     debug: dict | None = None
 
 
@@ -122,6 +143,14 @@ def load_reviews() -> dict[str, list[Review]]:
         product_id: [Review.model_validate(review) for review in reviews]
         for product_id, reviews in reviews_by_product.items()
     }
+
+
+@lru_cache
+def get_ticket_repository() -> TicketRepository:
+    return TicketRepository(
+        seed_path=SEED_TICKETS_PATH,
+        runtime_path=RUNTIME_TICKETS_PATH,
+    )
 
 
 def read_json(path: Path):
@@ -175,8 +204,69 @@ def get_product_reviews(product_id: str) -> list[Review]:
     return load_reviews().get(product_id, [])
 
 
+@app.post("/tickets", response_model=SupportTicket, status_code=201)
+def create_ticket(
+    request: TicketCreateRequest,
+    ticket_repository: TicketRepository = Depends(get_ticket_repository),
+) -> SupportTicket:
+    try:
+        return ticket_repository.create_ticket(request)
+    except TicketRepositoryError as exc:
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+
+
+@app.get("/tickets", response_model=list[SupportTicket])
+def list_tickets(
+    status: TicketStatus | None = None,
+    priority: TicketPriority | None = None,
+    issueType: IssueType | None = None,
+    productId: str | None = None,
+    ticket_repository: TicketRepository = Depends(get_ticket_repository),
+) -> list[SupportTicket]:
+    filters = TicketListFilters(
+        status=status,
+        priority=priority,
+        issueType=issueType,
+        productId=productId,
+    )
+    try:
+        return ticket_repository.list_tickets(filters)
+    except TicketRepositoryError as exc:
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+
+
+@app.get("/tickets/{ticket_id}", response_model=SupportTicket)
+def get_ticket(
+    ticket_id: str,
+    ticket_repository: TicketRepository = Depends(get_ticket_repository),
+) -> SupportTicket:
+    try:
+        return ticket_repository.get_ticket(ticket_id)
+    except TicketNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except TicketRepositoryError as exc:
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+
+
+@app.patch("/tickets/{ticket_id}", response_model=SupportTicket)
+def update_ticket(
+    ticket_id: str,
+    request: TicketUpdateRequest,
+    ticket_repository: TicketRepository = Depends(get_ticket_repository),
+) -> SupportTicket:
+    try:
+        return ticket_repository.update_ticket(ticket_id, request)
+    except TicketNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except TicketRepositoryError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
 @app.post("/chat", response_model=ChatResponse)
-def chat(request: ChatRequest) -> ChatResponse:
+def chat(
+    request: ChatRequest,
+    ticket_repository: TicketRepository = Depends(get_ticket_repository),
+) -> ChatResponse:
     question = request.question.strip()
     if not question:
         raise HTTPException(status_code=400, detail="Question is required")
@@ -224,11 +314,31 @@ def chat(request: ChatRequest) -> ChatResponse:
             )
         )
 
+    created_ticket = None
+    handoff = agent_result.handoff
+    if request.createTicket:
+        if not handoff or not handoff.get("canCreateTicket"):
+            raise HTTPException(
+                status_code=400,
+                detail="Ticket creation requires a support handoff.",
+            )
+        try:
+            ticket_payload = TicketCreateRequest.model_validate(handoff.get("ticketPayload", {}))
+            if request.ticketRequestId:
+                ticket_payload = ticket_payload.model_copy(
+                    update={"idempotencyKey": request.ticketRequestId}
+                )
+            created_ticket = ticket_repository.create_ticket(ticket_payload)
+        except TicketRepositoryError as exc:
+            raise HTTPException(status_code=500, detail=str(exc)) from exc
+
     return ChatResponse(
         question=agent_result.question,
         answer=agent_result.answer,
         provider=request.provider,
         citations=citations,
         retrievedContext=retrieved_context,
+        handoff=handoff,
+        createdTicket=created_ticket,
         debug=agent_result.debug if request.debug else None,
     )

@@ -9,6 +9,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from langchain_core.documents import Document
+from langchain_core.prompts import ChatPromptTemplate
 import truststore
 
 from document_loader import compact_text
@@ -29,6 +30,44 @@ DEFAULT_CLAUDE_TIMEOUT_SECONDS = 30
 SENTENCE_PATTERN = re.compile(r"(?<=[.!?])\s+|\n+-\s+|\n+\d+\.\s+")
 REPO_ROOT = Path(__file__).resolve().parents[1]
 BACKEND_ENV_PATH = REPO_ROOT / "backend" / ".env"
+
+SUPPORT_SYSTEM_PROMPT = """You are the customer support assistant for a local electronics ecommerce demo.
+
+Persona:
+- Calm, concise, practical, and customer-friendly.
+- Honest about local-demo limits.
+- Helpful without pretending to access private account, order, payment, tracking, phone, email, CRM, or inventory systems.
+
+Grounding rules:
+- Use only the retrieved support sources and catalog context provided in the user message.
+- Cite factual claims with the supplied bracketed citation numbers, such as [1].
+- Do not cite sources that were not supplied.
+- If the sources are insufficient, say what is missing briefly and ask one focused follow-up question.
+- Do not invent policies, product specs, contact numbers, order status, warranty outcomes, or troubleshooting steps.
+
+Style:
+- Plain text only.
+- Prefer short paragraphs or '-' bullets.
+- No markdown headings, tables, bold text, horizontal rules, or emoji.
+- Keep the answer direct enough for a chat panel."""
+
+SUPPORT_USER_PROMPT = """Customer question:
+{question}
+
+Retrieved support sources:
+{source_context}
+
+Task:
+Write the final customer-facing answer. 
+Stay grounded in the retrieved sources, preserve citation numbers,
+and keep the tone concise and reassuring."""
+
+SUPPORT_ANSWER_PROMPT = ChatPromptTemplate.from_messages(
+    [
+        ("system", SUPPORT_SYSTEM_PROMPT),
+        ("human", SUPPORT_USER_PROMPT),
+    ]
+)
 
 
 @dataclass(frozen=True)
@@ -208,62 +247,87 @@ def build_cited_answer_from_results(
     )
 
 
+def source_context_block(
+    question: str,
+    citation: Citation,
+    result: RetrievalResult,
+) -> str:
+    snippet = best_context_snippet(question, result.document, max_sentences=4)
+    return "\n".join(
+        [
+            f"[{citation.id}] {citation.label}",
+            f"Document type: {citation.doc_type}",
+            f"Product ID: {citation.product_id or 'none'}",
+            f"Source path: {citation.source_path}",
+            f"Snippet: {snippet}",
+        ]
+    )
+
+
+def build_source_context(
+    question: str,
+    citations: list[Citation],
+    retrieved_results: list[RetrievalResult],
+) -> str:
+    return "\n\n".join(
+        source_context_block(question, citation, result)
+        for citation, result in zip(citations, retrieved_results, strict=True)
+    )
+
+
+def build_support_answer_prompt_messages(
+    question: str,
+    citations: list[Citation],
+    retrieved_results: list[RetrievalResult],
+):
+    source_context = build_source_context(
+        question=question,
+        citations=citations,
+        retrieved_results=retrieved_results,
+    )
+    return SUPPORT_ANSWER_PROMPT.invoke(
+        {
+            "question": question,
+            "source_context": source_context,
+        }
+    ).to_messages()
+
+
 def generate_claude_answer_from_context(
     question: str,
     citations: list[Citation],
     retrieved_results: list[RetrievalResult],
 ) -> str | None:
     load_backend_env()
-    api_key = os.getenv("CLAUDE_API_KEY")
+    api_key = os.getenv("CLAUDE_API_KEY") or os.getenv("ANTHROPIC_API_KEY")
     if not api_key or not citations or not retrieved_results:
         return None
 
-    source_blocks = []
-    for citation, result in zip(citations, retrieved_results, strict=True):
-        snippet = best_context_snippet(question, result.document, max_sentences=4)
-        source_blocks.append(
-            "\n".join(
-                [
-                    f"[{citation.id}] {citation.label}",
-                    f"Document type: {citation.doc_type}",
-                    f"Product ID: {citation.product_id or 'none'}",
-                    f"Source path: {citation.source_path}",
-                    f"Snippet: {snippet}",
-                ]
-            )
-        )
-
-    user_prompt = "\n\n".join(
-        [
-            "Customer question:",
-            question,
-            "Retrieved support sources:",
-            *source_blocks,
-            (
-                "Write a concise, natural customer-support answer in plain text. Use short "
-                "bullet points with '-' when the answer has more than one detail. Do not use "
-                "markdown headings, bold text, tables, horizontal rules, or emoji. Use only "
-                "the retrieved sources above. Cite claims with bracketed citation numbers "
-                "like [1]. If the sources do not contain enough detail, say what is missing "
-                "briefly and ask one focused follow-up question."
-            ),
-        ]
+    prompt_messages = build_support_answer_prompt_messages(
+        question=question,
+        citations=citations,
+        retrieved_results=retrieved_results,
     )
+    system_prompt = "\n\n".join(
+        str(message.content)
+        for message in prompt_messages
+        if message.type == "system"
+    )
+    anthropic_messages = [
+        {
+            "role": "user" if message.type == "human" else message.type,
+            "content": str(message.content),
+        }
+        for message in prompt_messages
+        if message.type != "system"
+    ]
 
     request_body = {
         "model": os.getenv("CLAUDE_MODEL", DEFAULT_CLAUDE_MODEL),
         "max_tokens": int(os.getenv("CLAUDE_MAX_TOKENS", str(DEFAULT_CLAUDE_MAX_TOKENS))),
         "temperature": 0.2,
-        "system": (
-            "You are a support assistant for a local electronics ecommerce demo. "
-            "You must stay grounded in the supplied support sources and preserve citation numbers."
-        ),
-        "messages": [
-            {
-                "role": "user",
-                "content": user_prompt,
-            }
-        ],
+        "system": system_prompt,
+        "messages": anthropic_messages,
     }
 
     request = urllib.request.Request(

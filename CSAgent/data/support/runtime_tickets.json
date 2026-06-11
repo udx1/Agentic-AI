@@ -1,0 +1,27 @@
+[
+  {
+    "id": "TICKET-0026",
+    "status": "open",
+    "priority": "normal",
+    "issueType": "contact_request",
+    "summary": "Give me support contact number",
+    "source": "chat",
+    "product": {
+      "productId": null,
+      "productTitle": null,
+      "category": null,
+      "subcategory": null
+    },
+    "handoff": {
+      "question": "Give me support contact number",
+      "conversationExcerpt": "Give me support contact number",
+      "escalationReason": "Question asks for customer support contact or handoff details.",
+      "agentIntent": "escalation_candidate",
+      "retrievalSufficient": false
+    },
+    "contactPreference": "unknown",
+    "internalNotes": [],
+    "createdAt": "2026-06-11T03:08:24.849184Z",
+    "updatedAt": "2026-06-11T03:08:24.849184Z"
+  }
+]

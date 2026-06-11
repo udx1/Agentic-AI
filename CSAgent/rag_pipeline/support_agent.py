@@ -24,6 +24,7 @@ SupportIntent = Literal[
     "comparison",
     "review_summary",
     "catalog_availability",
+    "catalog_ranking",
     "clarification_needed",
     "escalation_candidate",
     "unsupported_category",
@@ -35,6 +36,37 @@ class EscalationMetadata(TypedDict, total=False):
     detected_intent: SupportIntent
     product_hint: str
     summary: str
+
+
+class TicketProductPayload(TypedDict, total=False):
+    productId: str | None
+    productTitle: str | None
+    category: str | None
+    subcategory: str | None
+
+
+class TicketHandoffPayload(TypedDict, total=False):
+    question: str | None
+    conversationExcerpt: str | None
+    escalationReason: str | None
+    agentIntent: str | None
+    retrievalSufficient: bool | None
+
+
+class TicketCreatePayload(TypedDict, total=False):
+    issueType: str
+    summary: str
+    priority: str
+    source: str
+    product: TicketProductPayload
+    handoff: TicketHandoffPayload
+    contactPreference: str
+
+
+class HandoffMetadata(TypedDict, total=False):
+    canCreateTicket: bool
+    reason: str
+    ticketPayload: TicketCreatePayload
 
 
 class SupportAgentState(TypedDict, total=False):
@@ -52,6 +84,7 @@ class SupportAgentState(TypedDict, total=False):
     has_enough_context: bool
     needs_clarification: bool
     escalation: EscalationMetadata | None
+    handoff: HandoffMetadata | None
 
 
 @dataclass(frozen=True)
@@ -74,6 +107,7 @@ class SupportAgentResult:
     has_enough_context: bool = False
     needs_clarification: bool = False
     escalation: EscalationMetadata | None = None
+    handoff: HandoffMetadata | None = None
     debug: dict[str, object] | None = None
 
 
@@ -102,6 +136,8 @@ def debug_metadata_from_state(state: SupportAgentState) -> dict[str, object]:
         graph_path.append("escalate")
     elif intent == "catalog_availability":
         graph_path.append("answer_catalog")
+    elif intent == "catalog_ranking":
+        graph_path.append("rank_catalog")
     elif intent in {"clarification_needed", "unsupported_category"}:
         graph_path.append("clarify")
     else:
@@ -127,6 +163,7 @@ def debug_metadata_from_state(state: SupportAgentState) -> dict[str, object]:
         },
         "graphPath": graph_path,
         "escalation": state.get("escalation"),
+        "handoff": state.get("handoff"),
         "retrievedResults": [
             retrieval_debug_item(result, rank)
             for rank, result in enumerate(results, start=1)
@@ -148,6 +185,7 @@ def initial_support_state(
         "has_enough_context": False,
         "needs_clarification": False,
         "escalation": None,
+        "handoff": None,
     }
 
 
@@ -174,11 +212,32 @@ CATALOG_AVAILABILITY_KEYWORDS = {
     "carry",
     "carries",
     "catalog",
+    "device",
+    "devices",
     "have",
     "in",
+    "looking",
     "sell",
+    "show",
     "stock",
     "store",
+}
+CATALOG_RANKING_KEYWORDS = {
+    "best",
+    "cheapest",
+    "costliest",
+    "expensive",
+    "highest",
+    "least",
+    "lowest",
+    "most",
+    "popular",
+    "rank",
+    "ranking",
+    "rated",
+    "reviewed",
+    "reviews",
+    "top",
 }
 TROUBLESHOOTING_KEYWORDS = {
     "broken",
@@ -196,6 +255,46 @@ TROUBLESHOOTING_KEYWORDS = {
     "troubleshoot",
     "troubleshooting",
     "working",
+}
+DEFECT_KEYWORDS = {
+    "broken",
+    "damage",
+    "damaged",
+    "defect",
+    "defective",
+    "failed",
+    "failure",
+    "malfunction",
+    "shattered",
+    "unsafe",
+}
+MISSING_PART_KEYWORDS = {
+    "accessory",
+    "accessories",
+    "component",
+    "components",
+    "missing",
+    "part",
+    "parts",
+    "piece",
+    "pieces",
+}
+PAYMENT_HANDOFF_KEYWORDS = {
+    "card",
+    "charge",
+    "charged",
+    "double",
+    "payment",
+    "payments",
+    "transaction",
+}
+SHIPPING_HANDOFF_KEYWORDS = {
+    "delivered",
+    "delivery",
+    "package",
+    "shipment",
+    "shipping",
+    "tracking",
 }
 COMPATIBILITY_KEYWORDS = {
     "compatible",
@@ -231,6 +330,19 @@ ACCOUNT_OR_ORDER_KEYWORDS = {
     "personal",
     "tracking",
 }
+CONTACT_SUPPORT_KEYWORDS = {
+    "agent",
+    "call",
+    "contact",
+    "email",
+    "helpdesk",
+    "human",
+    "number",
+    "phone",
+    "representative",
+    "specialist",
+    "support",
+}
 URGENT_SUPPORT_KEYWORDS = {
     "burn",
     "burning",
@@ -244,6 +356,16 @@ URGENT_SUPPORT_KEYWORDS = {
     "smoked",
     "sparks",
     "unsafe",
+}
+REPEATED_UNRESOLVED_KEYWORDS = {
+    "again",
+    "already",
+    "keeps",
+    "multiple",
+    "repeated",
+    "still",
+    "tried",
+    "unresolved",
 }
 UNSUPPORTED_CATEGORY_KEYWORDS = {
     "apparel",
@@ -266,11 +388,17 @@ UNSUPPORTED_CATEGORY_KEYWORDS = {
 QUESTION_DETAIL_KEYWORDS = (
     POLICY_KEYWORDS
     | CATALOG_AVAILABILITY_KEYWORDS
+    | CATALOG_RANKING_KEYWORDS
     | TROUBLESHOOTING_KEYWORDS
+    | DEFECT_KEYWORDS
+    | MISSING_PART_KEYWORDS
+    | PAYMENT_HANDOFF_KEYWORDS
+    | SHIPPING_HANDOFF_KEYWORDS
     | COMPATIBILITY_KEYWORDS
     | COMPARISON_KEYWORDS
     | REVIEW_KEYWORDS
     | ACCOUNT_OR_ORDER_KEYWORDS
+    | CONTACT_SUPPORT_KEYWORDS
     | URGENT_SUPPORT_KEYWORDS
     | UNSUPPORTED_CATEGORY_KEYWORDS
 )
@@ -284,12 +412,19 @@ CATALOG_QUERY_STOP_WORDS = {
     "carry",
     "carries",
     "catalog",
+    "device",
+    "devices",
     "do",
     "does",
+    "for",
     "have",
+    "i",
+    "am",
     "in",
     "is",
+    "looking",
     "me",
+    "not",
     "sell",
     "show",
     "stock",
@@ -297,12 +432,43 @@ CATALOG_QUERY_STOP_WORDS = {
     "the",
     "there",
     "you",
+    "yes",
+}
+CATALOG_RANKING_STOP_WORDS = CATALOG_QUERY_STOP_WORDS | {
+    "best",
+    "by",
+    "cheapest",
+    "costliest",
+    "expensive",
+    "highest",
+    "least",
+    "list",
+    "lowest",
+    "most",
+    "popular",
+    "products",
+    "rank",
+    "ranking",
+    "rated",
+    "review",
+    "reviewed",
+    "reviews",
+    "show",
+    "top",
+    "with",
 }
 CATALOG_SYNONYMS = {
+    "camera": {"camera", "cameras", "optics"},
+    "cameras": {"camera", "cameras", "optics"},
+    "fitness": {"fitness", "activity", "tracker", "trackers"},
     "laptop": {"laptop", "notebook", "computer", "computers"},
     "laptops": {"laptop", "notebook", "computer", "computers"},
     "notebook": {"laptop", "notebook", "computer", "computers"},
     "notebooks": {"laptop", "notebook", "computer", "computers"},
+    "tracker": {"fitness", "activity", "tracker", "trackers"},
+    "trackers": {"fitness", "activity", "tracker", "trackers"},
+    "watch": {"watch", "watches", "tracker", "trackers"},
+    "watches": {"watch", "watches", "tracker", "trackers"},
 }
 
 
@@ -347,10 +513,11 @@ def availability_query_tokens(question: str) -> set[str]:
 
 
 def availability_display_terms(question: str) -> str:
+    excluded_terms = catalog_exclusion_tokens(question)
     terms = [
         token
         for token in question_tokens(question)
-        if token not in CATALOG_QUERY_STOP_WORDS
+        if token not in CATALOG_QUERY_STOP_WORDS and token not in excluded_terms
     ]
     return " ".join(terms) if terms else question
 
@@ -368,9 +535,81 @@ def is_catalog_availability_question(question: str) -> bool:
             "available",
             "do you sell",
             "do you carry",
+            "i am looking for",
+            "i'm looking for",
+            "looking for",
+            "show me",
         )
     )
     return phrase_match or bool(tokens & {"available", "availability", "stock"})
+
+
+def is_catalog_ranking_question(question: str) -> bool:
+    question_lower = question.lower()
+    tokens = question_tokens(question)
+    if not (tokens & CATALOG_RANKING_KEYWORDS):
+        return False
+    if "review" in tokens or "reviews" in tokens:
+        return bool(tokens & {"top", "most", "highest", "least", "lowest", "best"})
+    ranking_phrases = (
+        "top ",
+        "highest rated",
+        "most reviewed",
+        "cheapest",
+        "lowest price",
+        "most expensive",
+        "highest price",
+        "best rated",
+    )
+    return any(phrase in question_lower for phrase in ranking_phrases)
+
+
+def is_contact_request(question: str) -> bool:
+    question_lower = question.lower()
+    tokens = question_tokens(question)
+    contact_phrases = (
+        "contact number",
+        "support number",
+        "phone number",
+        "support contact",
+        "customer support",
+        "talk to",
+        "speak to",
+        "call support",
+        "contact support",
+    )
+    return any(phrase in question_lower for phrase in contact_phrases) or bool(
+        tokens & {"phone", "email", "helpdesk"}
+    )
+
+
+def is_ticket_handoff_question(question: str) -> bool:
+    question_lower = question.lower()
+    tokens = question_tokens(question)
+    if is_contact_request(question):
+        return True
+    if tokens & ACCOUNT_OR_ORDER_KEYWORDS:
+        return True
+    if tokens & URGENT_SUPPORT_KEYWORDS:
+        return True
+    if tokens & DEFECT_KEYWORDS:
+        return True
+    if tokens & MISSING_PART_KEYWORDS:
+        return True
+    if tokens & PAYMENT_HANDOFF_KEYWORDS and (
+        tokens & {"card", "charged", "double", "transaction"}
+        or "charged twice" in question_lower
+    ):
+        return True
+    if tokens & SHIPPING_HANDOFF_KEYWORDS and (
+        tokens & {"delivered", "missing", "tracking", "package", "shipment"}
+        or "marked delivered" in question_lower
+        or "cannot be found" in question_lower
+    ):
+        return True
+    if tokens & TROUBLESHOOTING_KEYWORDS and tokens & REPEATED_UNRESOLVED_KEYWORDS:
+        return True
+    return False
 
 
 def catalog_product_search(question: str, limit: int = 5) -> list[dict[str, object]]:
@@ -378,8 +617,14 @@ def catalog_product_search(question: str, limit: int = 5) -> list[dict[str, obje
     if not query_tokens:
         return []
 
+    exclusion_tokens = catalog_exclusion_tokens(question)
+    require_tracker_device = is_fitness_tracker_device_request(question)
     ranked: list[tuple[int, dict[str, object]]] = []
     for product in load_catalog_products():
+        if product_contains_excluded_terms(product, exclusion_tokens):
+            continue
+        if require_tracker_device and not product_matches_tracker_device(product):
+            continue
         title_tokens = expanded_catalog_tokens(str(product.get("title", "")))
         brand_tokens = expanded_catalog_tokens(str(product.get("brand", "")))
         category_tokens = expanded_catalog_tokens(str(product.get("category", "")))
@@ -404,6 +649,165 @@ def catalog_product_search(question: str, limit: int = 5) -> list[dict[str, obje
             ranked.append((score, product))
 
     return [product for _, product in sorted(ranked, key=lambda item: (-item[0], str(item[1].get("title", ""))))[:limit]]
+
+
+def catalog_exclusion_tokens(question: str) -> set[str]:
+    question_lower = question.lower()
+    exclusions: set[str] = set()
+    if "not the bands" in question_lower or "not bands" in question_lower or "not band" in question_lower:
+        exclusions.update({"band", "bands", "strap", "straps", "replacement"})
+    if "device" in question_lower or "devices" in question_lower:
+        exclusions.update({"band", "bands", "strap", "straps", "replacement"})
+    return exclusions
+
+
+def product_contains_excluded_terms(product: dict[str, object], exclusion_tokens: set[str]) -> bool:
+    if not exclusion_tokens:
+        return False
+    searchable = " ".join(
+        str(product.get(field, ""))
+        for field in ("title", "subcategory", "description")
+    )
+    return bool(question_tokens(searchable) & exclusion_tokens)
+
+
+def is_fitness_tracker_device_request(question: str) -> bool:
+    tokens = question_tokens(question)
+    return bool(tokens & {"fitness", "tracker", "trackers", "watch", "watches"}) and bool(
+        tokens & {"device", "devices"}
+    )
+
+
+def product_matches_tracker_device(product: dict[str, object]) -> bool:
+    searchable = " ".join(
+        str(product.get(field, ""))
+        for field in ("title", "brand", "category", "subcategory", "description")
+    )
+    tokens = question_tokens(searchable)
+    accessory_terms = {"accessories", "accessory", "band", "bands", "case", "cover", "replacement", "strap", "straps", "wristband", "wristbands"}
+    if tokens & accessory_terms:
+        return False
+    return bool(tokens & {"tracker", "trackers", "watch", "watches", "fitbit", "garmin", "vivofit"})
+
+
+def product_matches_accessory_terms(product: dict[str, object], filter_tokens: set[str]) -> bool:
+    searchable = " ".join(
+        str(product.get(field, ""))
+        for field in ("title", "brand", "category", "subcategory", "description")
+    )
+    tokens = expanded_catalog_tokens(searchable)
+    if filter_tokens & {"watch", "watches", "tracker", "trackers", "fitness"} and tokens & {
+        "airpod",
+        "airpods",
+        "ear",
+        "earbud",
+        "earbuds",
+        "headphone",
+        "headphones",
+        "headset",
+    }:
+        return False
+    band_terms = {
+        "band",
+        "bands",
+        "replacement",
+        "strap",
+        "straps",
+        "wristband",
+        "wristbands",
+    }
+    generic_accessory_terms = {"accessories", "accessory", "case", "cover"}
+    requested_band = bool(filter_tokens & band_terms)
+    has_accessory_match = bool(tokens & band_terms) if requested_band else bool(
+        tokens & (band_terms | generic_accessory_terms)
+    )
+    has_domain_match = not (
+        filter_tokens & {"watch", "watches", "tracker", "trackers", "fitness"}
+    ) or bool(
+        tokens
+        & {"watch", "watches", "tracker", "trackers", "fitbit", "garmin", "vivofit", "alta"}
+    )
+    return has_accessory_match and has_domain_match
+
+
+def catalog_ranking_limit(question: str) -> int:
+    numbers = [int(match) for match in re.findall(r"\b\d+\b", question)]
+    if not numbers:
+        return 5
+    return min(max(numbers[0], 1), 10)
+
+
+def catalog_ranking_filter_tokens(question: str) -> set[str]:
+    return {
+        token
+        for token in expanded_catalog_tokens(question)
+        if token not in CATALOG_RANKING_STOP_WORDS and not token.isdigit()
+    }
+
+
+def catalog_ranking_filter_label(question: str) -> str:
+    return " ".join(
+        token
+        for token in re.findall(r"[a-z0-9]+", question.lower())
+        if token not in CATALOG_RANKING_STOP_WORDS and not token.isdigit()
+    )
+
+
+def catalog_ranking_metric(question: str) -> tuple[str, str, bool]:
+    tokens = question_tokens(question)
+    question_lower = question.lower()
+    if tokens & {"cheapest"} or "lowest price" in question_lower:
+        return "price", "cheapest", False
+    if tokens & {"expensive", "costliest"} or "highest price" in question_lower:
+        return "price", "most expensive", True
+    if tokens & {"rated", "rating", "best"} or "highest rated" in question_lower:
+        return "rating", "highest rated", True
+    return "reviewCount", "most reviewed", True
+
+
+def product_matches_catalog_filter(product: dict[str, object], filter_tokens: set[str]) -> bool:
+    if not filter_tokens:
+        return True
+    if filter_tokens & {"band", "bands", "strap", "straps", "wristband", "wristbands"}:
+        return product_matches_accessory_terms(product, filter_tokens)
+    if filter_tokens & {"watch", "watches", "tracker", "trackers", "fitness"}:
+        return product_matches_tracker_device(product)
+    searchable = " ".join(
+        str(product.get(field, ""))
+        for field in ("title", "brand", "category", "subcategory", "description")
+    )
+    product_tokens = expanded_catalog_tokens(searchable)
+    return bool(filter_tokens & product_tokens)
+
+
+def catalog_ranked_products(question: str) -> tuple[list[dict[str, object]], str, str]:
+    metric, metric_label, reverse = catalog_ranking_metric(question)
+    filter_tokens = catalog_ranking_filter_tokens(question)
+    products = [
+        product
+        for product in load_catalog_products()
+        if product_matches_catalog_filter(product, filter_tokens)
+    ]
+    ranked = sorted(
+        products,
+        key=lambda product: (
+            float(product.get(metric, 0)),
+            float(product.get("rating", 0)),
+            int(product.get("reviewCount", 0)),
+        ),
+        reverse=reverse,
+    )
+    if metric == "price" and not reverse:
+        ranked = sorted(
+            products,
+            key=lambda product: (
+                float(product.get("price", 0)),
+                -float(product.get("rating", 0)),
+                -int(product.get("reviewCount", 0)),
+            ),
+        )
+    filter_label = catalog_ranking_filter_label(question)
+    return ranked[:catalog_ranking_limit(question)], metric_label, filter_label
 
 
 def detect_product_hints(question: str) -> list[str]:
@@ -449,10 +853,13 @@ def classify_support_intent(question: str, product_hints: list[str] | None = Non
     if tokens.intersection(UNSUPPORTED_CATEGORY_KEYWORDS) and not product_hints:
         return "unsupported_category"
 
+    if is_catalog_ranking_question(question):
+        return "catalog_ranking"
+
     if is_catalog_availability_question(question):
         return "catalog_availability"
 
-    if tokens.intersection(ACCOUNT_OR_ORDER_KEYWORDS | URGENT_SUPPORT_KEYWORDS):
+    if is_ticket_handoff_question(question):
         return "escalation_candidate"
 
     if tokens.intersection(COMPARISON_KEYWORDS):
@@ -534,7 +941,7 @@ def retrieval_query_for_intent(
 
 
 def retrieval_settings_for_intent(intent: SupportIntent) -> tuple[int, int]:
-    if intent in {"catalog_availability", "clarification_needed", "escalation_candidate", "unsupported_category"}:
+    if intent in {"catalog_availability", "catalog_ranking", "clarification_needed", "escalation_candidate", "unsupported_category"}:
         return 0, 0
     if intent in {"comparison", "review_summary"}:
         return 6, 80
@@ -582,7 +989,7 @@ def retrieve_context(state: SupportAgentState) -> SupportAgentState:
 
 
 def expected_doc_types_for_intent(intent: SupportIntent) -> set[str]:
-    if intent == "catalog_availability":
+    if intent in {"catalog_availability", "catalog_ranking"}:
         return {"catalog_product"}
     if intent == "store_policy":
         return {"store_policy"}
@@ -749,6 +1156,59 @@ def generate_catalog_availability_answer(state: SupportAgentState) -> SupportAge
     }
 
 
+def generate_catalog_ranking_answer(state: SupportAgentState) -> SupportAgentState:
+    question = state.get("question", "")
+    matches, metric_label, filter_label = catalog_ranked_products(question)
+
+    if matches:
+        scope = f" matching {filter_label}" if filter_label else ""
+        result_rows = []
+        for index, product in enumerate(matches, start=1):
+            result_rows.append(
+                (
+                    f"{index}. {product.get('title')} ({product.get('id')}) by {product.get('brand')} - "
+                    f"${float(product.get('price', 0)):.2f}, "
+                    f"{product.get('rating')}/5 from {product.get('reviewCount')} reviews [{index}]"
+                )
+            )
+        answer = "\n".join(
+            [
+                f"Here are the {metric_label} catalog products{scope}:",
+                *result_rows,
+            ]
+        )
+    else:
+        answer = (
+            "I could not find matching catalog products for that ranking request. "
+            "Try a broader product type, brand, or category."
+        )
+
+    retrieved_results = [
+        catalog_result_from_product(product, rank, question)
+        for rank, product in enumerate(matches, start=1)
+    ]
+    citations = [
+        Citation(
+            id=str(index),
+            label=f"{index}. {product.get('title')} (catalog product)",
+            source_path="data/catalog/products.json",
+            doc_type="catalog_product",
+            product_id=str(product.get("id", "")),
+            chunk_id=f"catalog_product:{product.get('id', 'unknown')}",
+        )
+        for index, product in enumerate(matches, start=1)
+    ]
+    return {
+        **state,
+        "answer": answer,
+        "catalog_matches": matches,
+        "citations": citations,
+        "retrieved_results": retrieved_results,
+        "has_enough_context": bool(matches),
+        "needs_clarification": False,
+    }
+
+
 def clarification_prompt_for_intent(intent: SupportIntent) -> str:
     if intent == "store_policy":
         return (
@@ -804,12 +1264,24 @@ def escalation_reason_for_state(state: SupportAgentState) -> str:
     question = state.get("question", "")
     tokens = question_tokens(question)
 
+    if tokens & URGENT_SUPPORT_KEYWORDS:
+        return "Question uses urgent or safety-related issue language."
+    if tokens & PAYMENT_HANDOFF_KEYWORDS and tokens & {"charged", "double", "transaction", "card"}:
+        return "Question appears to require payment or transaction-specific support."
+    if tokens & SHIPPING_HANDOFF_KEYWORDS and tokens & {"damaged", "delivered", "missing", "tracking", "package", "shipment"}:
+        return "Question appears to require shipment, delivery, or tracking-specific support."
+    if tokens & DEFECT_KEYWORDS:
+        return "Question reports possible product damage, defect, or unsafe behavior."
+    if tokens & MISSING_PART_KEYWORDS:
+        return "Question reports a missing part, component, or accessory."
     if tokens & {"order", "tracking", "address", "invoice", "account"}:
         return "Question appears to need account, order, tracking, or personal support data."
     if tokens & {"cancel"}:
         return "Question appears to require an order-specific cancellation workflow."
-    if tokens & URGENT_SUPPORT_KEYWORDS:
-        return "Question uses urgent or safety-related issue language."
+    if is_contact_request(question):
+        return "Question asks for customer support contact or handoff details."
+    if tokens & TROUBLESHOOTING_KEYWORDS and tokens & REPEATED_UNRESOLVED_KEYWORDS:
+        return "Question suggests repeated unresolved troubleshooting attempts."
     if intent == "escalation_candidate":
         return "Question appears to need support beyond the local product and policy knowledge base."
     return "Retrieved context was not strong enough for a grounded self-service answer."
@@ -822,15 +1294,153 @@ def escalation_answer_for_reason(reason: str) -> str:
             "I can explain the general shipping, returns, refunds, warranty, or payment policies, "
             "or I can help prepare this as a support ticket for order-specific help."
         )
-    if "safety-related" in reason:
+    if "contact or handoff" in reason:
+        return (
+            "I do not have a published support phone number in this local demo knowledge base. "
+            "I can help with product setup, troubleshooting, compatibility, reviews, shipping, returns, refunds, warranty, or payments, "
+            "or I can help prepare this as a support ticket for a specialist."
+        )
+    if "safety-related" in reason or "unsafe behavior" in reason:
         return (
             "This sounds like it may need urgent safety-focused support. Stop using the product if it seems unsafe, "
             "and I can help prepare this as a support ticket for specialist review."
+        )
+    if "payment or transaction-specific" in reason:
+        return (
+            "I do not have access to personal payment or transaction records. "
+            "I can explain the general payment policy, or I can help prepare this as a support ticket for billing review."
+        )
+    if "shipment, delivery, or tracking-specific" in reason:
+        return (
+            "I do not have access to shipment, delivery, or tracking records. "
+            "I can explain the general shipping policy, or I can help prepare this as a support ticket for delivery help."
+        )
+    if "missing part" in reason:
+        return (
+            "This sounds like a missing part or accessory issue that may need specialist review. "
+            "I can help prepare this as a support ticket."
+        )
+    if "repeated unresolved troubleshooting" in reason:
+        return (
+            "Since this sounds unresolved after troubleshooting, I can help prepare this as a support ticket "
+            "so a specialist can review the issue."
         )
     return (
         "I do not have enough grounded support context to answer that confidently. "
         "I can help prepare this as a support ticket so a support specialist can review it."
     )
+
+
+def ticket_issue_type_for_question(question: str, reason: str) -> str:
+    tokens = question_tokens(question)
+    reason_lower = reason.lower()
+    if is_contact_request(question):
+        return "contact_request"
+    if tokens & URGENT_SUPPORT_KEYWORDS or tokens & DEFECT_KEYWORDS or "unsafe" in reason_lower:
+        if tokens & SHIPPING_HANDOFF_KEYWORDS and tokens & {"damaged", "package", "shipment"}:
+            return "shipping"
+        return "product_defect"
+    if tokens & {"refund", "refunds"}:
+        return "refund"
+    if tokens & {"return", "returns"}:
+        return "return"
+    if tokens & {"warranty"}:
+        return "warranty"
+    if tokens & PAYMENT_HANDOFF_KEYWORDS:
+        return "payment"
+    if tokens & SHIPPING_HANDOFF_KEYWORDS:
+        return "shipping"
+    if tokens & MISSING_PART_KEYWORDS or "missing part" in reason_lower:
+        return "missing_parts"
+    if tokens & {"order", "cancel", "invoice", "address", "account"}:
+        return "order"
+    if tokens & {"missing", "part", "parts", "accessory"}:
+        return "missing_parts"
+    if tokens & {"compatible", "compatibility", "fit", "fits", "model"}:
+        return "compatibility"
+    if tokens & {"setup", "install", "pair", "pairing"}:
+        return "setup"
+    if tokens & TROUBLESHOOTING_KEYWORDS:
+        return "troubleshooting"
+    return "other"
+
+
+def ticket_priority_for_question(question: str, issue_type: str) -> str:
+    tokens = question_tokens(question)
+    question_lower = question.lower()
+    if tokens & URGENT_SUPPORT_KEYWORDS:
+        return "urgent"
+    if tokens & DEFECT_KEYWORDS:
+        return "high"
+    if issue_type in {"product_defect", "payment"}:
+        return "high"
+    if "marked delivered" in question_lower or "cannot be found" in question_lower:
+        return "high"
+    if tokens & {"damaged", "missing"} and tokens & {"shipment", "delivery", "package", "item"}:
+        return "high"
+    if tokens & TROUBLESHOOTING_KEYWORDS and tokens & REPEATED_UNRESOLVED_KEYWORDS:
+        return "high"
+    return "normal"
+
+
+def product_context_from_hints(product_hints: list[str]) -> TicketProductPayload:
+    for hint in product_hints:
+        hint_lower = hint.lower()
+        for product in load_product_hints():
+            product_id = product.product_id
+            title = product.title
+            if (
+                hint_lower == product_id.lower()
+                or product_id.lower() in hint_lower
+                or hint_lower in title.lower()
+                or title.lower() in hint_lower
+            ):
+                return {
+                    "productId": product.product_id,
+                    "productTitle": product.title,
+                    "category": product.category,
+                    "subcategory": product.subcategory,
+                }
+    return {
+        "productId": None,
+        "productTitle": None,
+        "category": None,
+        "subcategory": None,
+    }
+
+
+def support_ticket_payload_for_state(
+    state: SupportAgentState,
+    reason: str,
+) -> TicketCreatePayload:
+    question = state.get("question", "").strip()
+    issue_type = ticket_issue_type_for_question(question, reason)
+    return {
+        "issueType": issue_type,
+        "summary": question[:500] if question else "Support handoff requested.",
+        "priority": ticket_priority_for_question(question, issue_type),
+        "source": "chat",
+        "product": product_context_from_hints(state.get("product_hints", [])),
+        "handoff": {
+            "question": question,
+            "conversationExcerpt": question[:500] if question else None,
+            "escalationReason": reason,
+            "agentIntent": state.get("intent", "escalation_candidate"),
+            "retrievalSufficient": state.get("has_enough_context", False),
+        },
+        "contactPreference": "unknown",
+    }
+
+
+def handoff_metadata_for_state(
+    state: SupportAgentState,
+    reason: str,
+) -> HandoffMetadata:
+    return {
+        "canCreateTicket": True,
+        "reason": reason,
+        "ticketPayload": support_ticket_payload_for_state(state, reason),
+    }
 
 
 def prepare_escalation(state: SupportAgentState) -> SupportAgentState:
@@ -849,11 +1459,14 @@ def prepare_escalation(state: SupportAgentState) -> SupportAgentState:
         "has_enough_context": False,
         "needs_clarification": False,
         "escalation": escalation,
+        "handoff": handoff_metadata_for_state(state, reason),
     }
 
 
-def route_after_classification(state: SupportAgentState) -> Literal["retrieve", "clarify", "escalate", "answer_catalog"]:
+def route_after_classification(state: SupportAgentState) -> Literal["retrieve", "clarify", "escalate", "answer_catalog", "rank_catalog"]:
     intent = state.get("intent", "clarification_needed")
+    if intent == "catalog_ranking":
+        return "rank_catalog"
     if intent == "catalog_availability":
         return "answer_catalog"
     if intent == "escalation_candidate":
@@ -879,6 +1492,7 @@ def build_support_agent_graph():
     graph.add_node("assess", assess_context)
     graph.add_node("answer", generate_answer)
     graph.add_node("answer_catalog", generate_catalog_availability_answer)
+    graph.add_node("rank_catalog", generate_catalog_ranking_answer)
     graph.add_node("clarify", generate_clarification)
     graph.add_node("escalate", prepare_escalation)
 
@@ -891,6 +1505,7 @@ def build_support_agent_graph():
             "clarify": "clarify",
             "escalate": "escalate",
             "answer_catalog": "answer_catalog",
+            "rank_catalog": "rank_catalog",
         },
     )
     graph.add_edge("retrieve", "assess")
@@ -905,6 +1520,7 @@ def build_support_agent_graph():
     )
     graph.add_edge("answer", END)
     graph.add_edge("answer_catalog", END)
+    graph.add_edge("rank_catalog", END)
     graph.add_edge("clarify", END)
     graph.add_edge("escalate", END)
 
@@ -925,6 +1541,7 @@ def support_agent_result_from_state(
         has_enough_context=state.get("has_enough_context", False),
         needs_clarification=state.get("needs_clarification", False),
         escalation=state.get("escalation"),
+        handoff=state.get("handoff"),
         debug=debug_metadata_from_state(state) if include_debug else None,
     )
 

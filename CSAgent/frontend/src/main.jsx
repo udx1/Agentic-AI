@@ -9,7 +9,7 @@ const currency = new Intl.NumberFormat("en-US", {
   currency: "USD",
 });
 
-async function sendChatQuestion(question, debug = false) {
+async function sendChatQuestion(question, debug = false, createTicket = false, ticketRequestId = "") {
   const response = await fetch(`${apiBaseUrl}/chat`, {
     method: "POST",
     headers: {
@@ -19,6 +19,8 @@ async function sendChatQuestion(question, debug = false) {
       question,
       provider: "nebius",
       debug,
+      createTicket,
+      ticketRequestId: ticketRequestId || null,
     }),
   });
 
@@ -32,6 +34,47 @@ async function sendChatQuestion(question, debug = false) {
     }
 
     throw new Error(detail || "Support chat request failed.");
+  }
+
+  return response.json();
+}
+
+async function fetchTickets(filters = {}) {
+  const params = new URLSearchParams();
+  Object.entries(filters).forEach(([key, value]) => {
+    if (value) {
+      params.set(key, value);
+    }
+  });
+  const query = params.toString();
+  const response = await fetch(`${apiBaseUrl}/tickets${query ? `?${query}` : ""}`);
+
+  if (!response.ok) {
+    throw new Error("Ticket list request failed.");
+  }
+
+  return response.json();
+}
+
+async function updateTicketStatus(ticketId, status) {
+  const response = await fetch(`${apiBaseUrl}/tickets/${ticketId}`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ status }),
+  });
+
+  if (!response.ok) {
+    let detail = "";
+    try {
+      const errorBody = await response.json();
+      detail = typeof errorBody.detail === "string" ? errorBody.detail : "";
+    } catch {
+      detail = "";
+    }
+
+    throw new Error(detail || "Ticket update request failed.");
   }
 
   return response.json();
@@ -77,7 +120,11 @@ const translations = {
     searchPlaceholder: "Search products, brands, or categories",
     sort: "Sort",
     support: "Support",
+    supportConsole: "Tickets",
+    supportConsoleTitle: "Support tickets",
     supportCompatibilityPrompt: "Will this work with Bluetooth devices?",
+    supportCreateTicket: "Create ticket",
+    supportCreatingTicket: "Creating ticket...",
     supportDebugMode: "Developer mode",
     supportDebugPanel: "Developer trace",
     supportDraftPlaceholder: "Ask a support question",
@@ -90,10 +137,25 @@ const translations = {
     supportSend: "Send",
     supportSetupPrompt: "How do I set this product up?",
     supportSources: "Sources",
+    supportTicketCreated: "Ticket created",
+    supportTicketError: "Ticket could not be created. Please try again.",
     supportTitle: "Support chat",
     supportTroubleshootingPrompt: "My product will not power on.",
     supportRetrievedContext: "Retrieved context",
     stars: "stars",
+    ticketConversation: "Conversation",
+    ticketCreated: "Created",
+    ticketEmpty: "No tickets match the current filters.",
+    ticketFilters: "Ticket filters",
+    ticketIssue: "Issue",
+    ticketListError: "Tickets could not be loaded.",
+    ticketLoading: "Loading tickets",
+    ticketNotes: "Internal notes",
+    ticketPriority: "Priority",
+    ticketProduct: "Product",
+    ticketSource: "Source",
+    ticketStatus: "Status",
+    ticketUpdateError: "Ticket could not be updated.",
     topControls: "Catalog controls",
     total: "Total",
     tryDifferentSearch: "Try a different search or department.",
@@ -137,7 +199,11 @@ const translations = {
     searchPlaceholder: "Rechercher produits, marques ou categories",
     sort: "Trier",
     support: "Support",
+    supportConsole: "Tickets",
+    supportConsoleTitle: "Tickets support",
     supportCompatibilityPrompt: "Ce produit fonctionne-t-il avec les appareils Bluetooth ?",
+    supportCreateTicket: "Creer un ticket",
+    supportCreatingTicket: "Creation du ticket...",
     supportDebugMode: "Mode developpeur",
     supportDebugPanel: "Trace developpeur",
     supportDraftPlaceholder: "Posez une question au support",
@@ -150,10 +216,25 @@ const translations = {
     supportSend: "Envoyer",
     supportSetupPrompt: "Comment configurer ce produit ?",
     supportSources: "Sources",
+    supportTicketCreated: "Ticket cree",
+    supportTicketError: "Impossible de creer le ticket. Reessayez.",
     supportTitle: "Chat support",
     supportTroubleshootingPrompt: "Mon produit ne s'allume pas.",
     supportRetrievedContext: "Contexte retrouve",
     stars: "etoiles",
+    ticketConversation: "Conversation",
+    ticketCreated: "Cree",
+    ticketEmpty: "Aucun ticket ne correspond aux filtres.",
+    ticketFilters: "Filtres tickets",
+    ticketIssue: "Probleme",
+    ticketListError: "Impossible de charger les tickets.",
+    ticketLoading: "Chargement des tickets",
+    ticketNotes: "Notes internes",
+    ticketPriority: "Priorite",
+    ticketProduct: "Produit",
+    ticketSource: "Source",
+    ticketStatus: "Statut",
+    ticketUpdateError: "Impossible de mettre a jour le ticket.",
     topControls: "Controles du catalogue",
     total: "Total",
     tryDifferentSearch: "Essayez une autre recherche ou un autre rayon.",
@@ -171,10 +252,26 @@ const categoryLabels = {
 };
 
 const cartStorageKey = "csagent.cart.v1";
-const developerModeKey = "z";
+const evalModeKey = "eval";
+const supportModeKey = "support";
+
+function getAppMode() {
+  const mode = new URLSearchParams(window.location.search).get("_m") ?? "";
+  if (mode === "e") {
+    return evalModeKey;
+  }
+  if (mode === "s") {
+    return supportModeKey;
+  }
+  return "customer";
+}
 
 function isDeveloperModeAllowed() {
-  return new URLSearchParams(window.location.search).get("eval") === developerModeKey;
+  return getAppMode() === evalModeKey;
+}
+
+function isSupportModeAllowed() {
+  return getAppMode() === supportModeKey;
 }
 
 function getInitialCartItems() {
@@ -201,17 +298,21 @@ function getInitialCartItems() {
 
 function getRouteFromHash() {
   const hash = window.location.hash;
+  if (hash === "#/support/tickets" && isSupportModeAllowed()) {
+    return { productId: null, category: null, supportConsole: true };
+  }
+
   const productMatch = hash.match(/^#\/products\/(.+)$/);
   if (productMatch) {
-    return { productId: decodeURIComponent(productMatch[1]), category: null };
+    return { productId: decodeURIComponent(productMatch[1]), category: null, supportConsole: false };
   }
 
   const groupMatch = hash.match(/^#\/categories\/(.+)$/);
   if (groupMatch) {
-    return { productId: null, category: decodeURIComponent(groupMatch[1]) };
+    return { productId: null, category: decodeURIComponent(groupMatch[1]), supportConsole: false };
   }
 
-  return { productId: null, category: null };
+  return { productId: null, category: null, supportConsole: false };
 }
 
 function App() {
@@ -230,9 +331,18 @@ function App() {
   const [chatMessages, setChatMessages] = useState([]);
   const [chatInput, setChatInput] = useState("");
   const [isChatLoading, setIsChatLoading] = useState(false);
+  const [ticketCreationMessageId, setTicketCreationMessageId] = useState("");
+  const [supportTickets, setSupportTickets] = useState([]);
+  const [ticketFilters, setTicketFilters] = useState({ status: "open", priority: "" });
+  const [selectedTicketId, setSelectedTicketId] = useState("");
+  const [isTicketListLoading, setIsTicketListLoading] = useState(false);
+  const [ticketListError, setTicketListError] = useState("");
+  const [ticketUpdateError, setTicketUpdateError] = useState("");
   const [chatError, setChatError] = useState("");
   const [isDeveloperModeAllowedState, setIsDeveloperModeAllowedState] =
     useState(isDeveloperModeAllowed);
+  const [isSupportModeAllowedState, setIsSupportModeAllowedState] =
+    useState(isSupportModeAllowed);
   const [isDeveloperMode, setIsDeveloperMode] = useState(isDeveloperModeAllowed);
   const [cartItems, setCartItems] = useState(getInitialCartItems);
   const [language, setLanguage] = useState("en");
@@ -245,15 +355,22 @@ function App() {
   }, []);
 
   useEffect(() => {
-    const syncDeveloperModeAccess = () => {
-      const isAllowed = isDeveloperModeAllowed();
-      setIsDeveloperModeAllowedState(isAllowed);
-      setIsDeveloperMode(isAllowed);
+    const syncModeAccess = () => {
+      const developerAllowed = isDeveloperModeAllowed();
+      const supportAllowed = isSupportModeAllowed();
+      setIsDeveloperModeAllowedState(developerAllowed);
+      setIsSupportModeAllowedState(supportAllowed);
+      setIsDeveloperMode(developerAllowed);
+      if (!supportAllowed && window.location.hash === "#/support/tickets") {
+        window.location.hash = "#/";
+      } else {
+        setRoute(getRouteFromHash());
+      }
     };
 
-    syncDeveloperModeAccess();
-    window.addEventListener("popstate", syncDeveloperModeAccess);
-    return () => window.removeEventListener("popstate", syncDeveloperModeAccess);
+    syncModeAccess();
+    window.addEventListener("popstate", syncModeAccess);
+    return () => window.removeEventListener("popstate", syncModeAccess);
   }, []);
 
   useEffect(() => {
@@ -362,6 +479,46 @@ function App() {
     };
   }, [reviewsByProduct, selectedProduct, text.reviewsUnavailable]);
 
+  useEffect(() => {
+    if (!route.supportConsole) {
+      return;
+    }
+
+    let isMounted = true;
+
+    async function loadTickets() {
+      setIsTicketListLoading(true);
+      setTicketListError("");
+      setTicketUpdateError("");
+
+      try {
+        const tickets = await fetchTickets(ticketFilters);
+        if (isMounted) {
+          setSupportTickets(tickets);
+          setSelectedTicketId((currentTicketId) =>
+            tickets.some((ticket) => ticket.id === currentTicketId)
+              ? currentTicketId
+              : tickets[0]?.id ?? "",
+          );
+        }
+      } catch {
+        if (isMounted) {
+          setTicketListError(text.ticketListError);
+        }
+      } finally {
+        if (isMounted) {
+          setIsTicketListLoading(false);
+        }
+      }
+    }
+
+    loadTickets();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [route.supportConsole, ticketFilters, text.ticketListError]);
+
   const groupCounts = useMemo(
     () =>
       products.reduce((counts, product) => {
@@ -453,6 +610,7 @@ function App() {
     setChatInput("");
     setChatError("");
     setIsChatLoading(false);
+    setTicketCreationMessageId("");
   }
 
   async function submitChatQuestion(question) {
@@ -477,9 +635,13 @@ function App() {
       const assistantMessage = {
         id: `${Date.now()}-assistant`,
         role: "assistant",
+        question: trimmedQuestion,
         content: chatResponse.answer,
         citations: chatResponse.citations ?? [],
         retrievedContext: chatResponse.retrievedContext ?? [],
+        handoff: chatResponse.handoff ?? null,
+        createdTicket: chatResponse.createdTicket ?? null,
+        ticketError: "",
         debug: chatResponse.debug ?? null,
       };
       setChatMessages((currentMessages) => [...currentMessages, assistantMessage]);
@@ -488,6 +650,58 @@ function App() {
       setChatError(text.supportError);
     } finally {
       setIsChatLoading(false);
+    }
+  }
+
+  async function createTicketFromMessage(message) {
+    if (!message.handoff?.canCreateTicket || ticketCreationMessageId) {
+      return;
+    }
+
+    setTicketCreationMessageId(message.id);
+    setChatError("");
+
+    try {
+      const chatResponse = await sendChatQuestion(
+        message.question,
+        isDeveloperMode,
+        true,
+        message.id,
+      );
+      setChatMessages((currentMessages) =>
+        currentMessages.map((currentMessage) =>
+          currentMessage.id === message.id
+            ? {
+                ...currentMessage,
+                createdTicket: chatResponse.createdTicket ?? null,
+                ticketError: chatResponse.createdTicket ? "" : text.supportTicketError,
+              }
+            : currentMessage,
+        ),
+      );
+    } catch {
+      setChatMessages((currentMessages) =>
+        currentMessages.map((currentMessage) =>
+          currentMessage.id === message.id
+            ? { ...currentMessage, ticketError: text.supportTicketError }
+            : currentMessage,
+        ),
+      );
+    } finally {
+      setTicketCreationMessageId("");
+    }
+  }
+
+  async function handleTicketStatusChange(ticketId, status) {
+    setTicketUpdateError("");
+
+    try {
+      const updatedTicket = await updateTicketStatus(ticketId, status);
+      setSupportTickets((currentTickets) =>
+        currentTickets.map((ticket) => (ticket.id === updatedTicket.id ? updatedTicket : ticket)),
+      );
+    } catch {
+      setTicketUpdateError(text.ticketUpdateError);
     }
   }
 
@@ -555,6 +769,11 @@ function App() {
             <ChatIcon />
             {text.support}
           </button>
+          {isSupportModeAllowedState && (
+            <a className="support-toggle" href="#/support/tickets">
+              {text.supportConsole}
+            </a>
+          )}
           <button
             className="cart-toggle"
             type="button"
@@ -580,7 +799,20 @@ function App() {
       />
 
       <main>
-        {isCatalogLoading ? (
+        {route.supportConsole ? (
+          <SupportConsole
+            error={ticketListError}
+            filters={ticketFilters}
+            isLoading={isTicketListLoading}
+            onFilterChange={setTicketFilters}
+            onSelectTicket={setSelectedTicketId}
+            onStatusChange={handleTicketStatusChange}
+            selectedTicketId={selectedTicketId}
+            text={text}
+            tickets={supportTickets}
+            updateError={ticketUpdateError}
+          />
+        ) : isCatalogLoading ? (
           <StatusMessage title={text.loadingCatalog} />
         ) : catalogError ? (
           <StatusMessage title={catalogError} />
@@ -629,9 +861,179 @@ function App() {
           onInputChange={setChatInput}
           onDeveloperModeChange={setIsDeveloperMode}
           onSubmit={submitChatQuestion}
+          onCreateTicket={createTicketFromMessage}
+          ticketCreationMessageId={ticketCreationMessageId}
         />
       )}
     </div>
+  );
+}
+
+function SupportConsole({
+  error,
+  filters,
+  isLoading,
+  onFilterChange,
+  onSelectTicket,
+  onStatusChange,
+  selectedTicketId,
+  text,
+  tickets,
+  updateError,
+}) {
+  const selectedTicket = tickets.find((ticket) => ticket.id === selectedTicketId) ?? tickets[0];
+
+  function updateFilter(name, value) {
+    onFilterChange((currentFilters) => ({
+      ...currentFilters,
+      [name]: value,
+    }));
+  }
+
+  return (
+    <section className="support-console" aria-labelledby="support-console-title">
+      <div className="page-heading">
+        <div>
+          <p className="eyebrow">{text.supportConsole}</p>
+          <h1 id="support-console-title">{text.supportConsoleTitle}</h1>
+        </div>
+      </div>
+
+      <div className="ticket-filter-bar" aria-label={text.ticketFilters}>
+        <label>
+          <span>{text.ticketStatus}</span>
+          <select value={filters.status} onChange={(event) => updateFilter("status", event.target.value)}>
+            <option value="">All</option>
+            <option value="open">open</option>
+            <option value="in_progress">in_progress</option>
+            <option value="waiting_on_customer">waiting_on_customer</option>
+            <option value="resolved">resolved</option>
+          </select>
+        </label>
+        <label>
+          <span>{text.ticketPriority}</span>
+          <select value={filters.priority} onChange={(event) => updateFilter("priority", event.target.value)}>
+            <option value="">All</option>
+            <option value="low">low</option>
+            <option value="normal">normal</option>
+            <option value="high">high</option>
+            <option value="urgent">urgent</option>
+          </select>
+        </label>
+      </div>
+
+      {isLoading ? (
+        <StatusMessage title={text.ticketLoading} />
+      ) : error ? (
+        <StatusMessage title={error} />
+      ) : tickets.length ? (
+        <div className="ticket-console-layout">
+          <div className="ticket-list" aria-label={text.supportConsoleTitle}>
+            {tickets.map((ticket) => (
+              <button
+                className={ticket.id === selectedTicket?.id ? "active" : ""}
+                key={ticket.id}
+                type="button"
+                onClick={() => onSelectTicket(ticket.id)}
+              >
+                <span>{ticket.id}</span>
+                <strong>{ticket.summary}</strong>
+                <small>
+                  {ticket.priority} | {ticket.issueType} | {ticket.status}
+                </small>
+              </button>
+            ))}
+          </div>
+
+          {selectedTicket && (
+            <TicketDetail
+              onStatusChange={onStatusChange}
+              text={text}
+              ticket={selectedTicket}
+              updateError={updateError}
+            />
+          )}
+        </div>
+      ) : (
+        <StatusMessage title={text.ticketEmpty} />
+      )}
+    </section>
+  );
+}
+
+function TicketDetail({ onStatusChange, text, ticket, updateError }) {
+  const createdAt = ticket.createdAt ? new Date(ticket.createdAt).toLocaleString() : "";
+  const productLabel = ticket.product?.productTitle || ticket.product?.productId || "None";
+  const canUpdate = ticket.source !== "seed";
+
+  return (
+    <article className="ticket-detail">
+      <div className="ticket-detail-header">
+        <div>
+          <p className="eyebrow">{ticket.id}</p>
+          <h2>{ticket.summary}</h2>
+        </div>
+        <span className={`ticket-priority ${ticket.priority}`}>{ticket.priority}</span>
+      </div>
+
+      <dl className="ticket-facts">
+        <div>
+          <dt>{text.ticketStatus}</dt>
+          <dd>
+            {canUpdate ? (
+              <select
+                value={ticket.status}
+                onChange={(event) => onStatusChange(ticket.id, event.target.value)}
+              >
+                <option value="open">open</option>
+                <option value="in_progress">in_progress</option>
+                <option value="waiting_on_customer">waiting_on_customer</option>
+                <option value="resolved">resolved</option>
+              </select>
+            ) : (
+              ticket.status
+            )}
+          </dd>
+        </div>
+        <div>
+          <dt>{text.ticketIssue}</dt>
+          <dd>{ticket.issueType}</dd>
+        </div>
+        <div>
+          <dt>{text.ticketProduct}</dt>
+          <dd>{productLabel}</dd>
+        </div>
+        <div>
+          <dt>{text.ticketSource}</dt>
+          <dd>{ticket.source}</dd>
+        </div>
+        <div>
+          <dt>{text.ticketCreated}</dt>
+          <dd>{createdAt}</dd>
+        </div>
+      </dl>
+
+      {updateError && <p className="support-error">{updateError}</p>}
+
+      {ticket.handoff?.question && (
+        <section className="ticket-section">
+          <h3>{text.ticketConversation}</h3>
+          <p>{ticket.handoff.question}</p>
+          {ticket.handoff.escalationReason && <p>{ticket.handoff.escalationReason}</p>}
+        </section>
+      )}
+
+      {ticket.internalNotes?.length > 0 && (
+        <section className="ticket-section">
+          <h3>{text.ticketNotes}</h3>
+          <ul>
+            {ticket.internalNotes.map((note, index) => (
+              <li key={`${ticket.id}-note-${index}`}>{note}</li>
+            ))}
+          </ul>
+        </section>
+      )}
+    </article>
   );
 }
 
@@ -917,6 +1319,8 @@ function SupportPanel({
   onDeveloperModeChange,
   onInputChange,
   onSubmit,
+  onCreateTicket,
+  ticketCreationMessageId,
 }) {
   const starterPrompts = [
     text.supportReturnsPrompt,
@@ -962,7 +1366,9 @@ function SupportPanel({
                   <AssistantEvidence
                     isDeveloperMode={isDeveloperMode}
                     message={message}
+                    onCreateTicket={onCreateTicket}
                     text={text}
+                    ticketCreationMessageId={ticketCreationMessageId}
                   />
                 )}
               </article>
@@ -1017,22 +1423,49 @@ function SupportPanel({
   );
 }
 
-function AssistantEvidence({ isDeveloperMode, message, text }) {
+function AssistantEvidence({
+  isDeveloperMode,
+  message,
+  onCreateTicket,
+  text,
+  ticketCreationMessageId,
+}) {
   const citations = message.citations ?? [];
   const retrievedContext = message.retrievedContext ?? [];
   const debug = message.debug ?? null;
+  const handoff = message.handoff ?? null;
+  const isCreatingTicket = ticketCreationMessageId === message.id;
 
-  if (!isDeveloperMode) {
+  if (!handoff && !isDeveloperMode) {
     return null;
   }
 
-  if (!citations.length && !retrievedContext.length && !debug) {
+  if (!handoff && !citations.length && !retrievedContext.length && !debug) {
     return null;
   }
 
   return (
     <div className="assistant-evidence">
-      {citations.length > 0 && (
+      {handoff?.canCreateTicket && (
+        <div className="ticket-handoff">
+          {message.createdTicket ? (
+            <p>
+              {text.supportTicketCreated}: <strong>{message.createdTicket.id}</strong>
+            </p>
+          ) : (
+            <button
+              type="button"
+              onClick={() => onCreateTicket(message)}
+              disabled={isCreatingTicket}
+            >
+              {isCreatingTicket ? text.supportCreatingTicket : text.supportCreateTicket}
+            </button>
+          )}
+          {message.ticketError && <p className="support-ticket-error">{message.ticketError}</p>}
+        </div>
+      )}
+
+      {isDeveloperMode && citations.length > 0 && (
         <div className="citation-list" aria-label={text.supportSources}>
           <h3>{text.supportSources}</h3>
           {citations.map((citation, index) => (
@@ -1047,7 +1480,7 @@ function AssistantEvidence({ isDeveloperMode, message, text }) {
         </div>
       )}
 
-      {retrievedContext.length > 0 && (
+      {isDeveloperMode && retrievedContext.length > 0 && (
         <details className="retrieved-context">
           <summary>{text.supportRetrievedContext}</summary>
           <div className="retrieved-context-list">
@@ -1065,7 +1498,7 @@ function AssistantEvidence({ isDeveloperMode, message, text }) {
         </details>
       )}
 
-      {debug && (
+      {isDeveloperMode && debug && (
         <details className="developer-trace">
           <summary>{text.supportDebugPanel}</summary>
           <dl>

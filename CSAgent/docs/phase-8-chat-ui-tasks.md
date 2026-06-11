@@ -29,7 +29,7 @@ Response fields:
 - The frontend already uses `apiBaseUrl` for product, category, and review API calls.
 - The UI is catalog-first with product listing, product detail, reviews, local cart, and a floating support chat panel.
 - Normal support mode shows customer-facing answers only.
-- Eval mode is unlocked with `?eval=z` and shows citations, retrieved context, and developer trace details.
+- Eval mode is unlocked with `?_m=e` and shows citations, retrieved context, and developer trace details.
 
 ## Phase 8 Task List
 
@@ -96,13 +96,13 @@ Status: complete.
 - [x] Do not expose debug traces in the first customer-facing chat UI.
 - [x] Reserve space in the design for a later developer/debug panel.
 - [x] Later backend enhancement: add optional trace/debug metadata for observability and eval.
-- [x] Add a frontend developer-mode toggle that is hidden from the default customer flow and unlocked with `?eval=z`.
+- [x] Add a frontend developer-mode toggle that is hidden from the default customer flow and unlocked with `?_m=e`.
 - [x] When developer mode is enabled, send a debug flag with chat requests without changing the normal customer request path.
 - [x] Extend `POST /chat` to optionally return debug metadata such as intent, product hints, retrieval plan, sufficiency decision, retrieval scores, and selected graph path.
 - [x] Render debug metadata in a compact expandable developer panel separate from customer-facing citations.
 - [x] Keep developer mode disabled by default and safe to ignore when the backend does not return debug metadata.
 - [x] Hide citations and retrieved context in normal support mode; show them only in eval/developer mode.
-- [x] Enable eval/developer evidence by default when the URL includes `?eval=z`.
+- [x] Enable eval/developer evidence by default when the URL includes `?_m=e`.
 
 ### 9. Claude LLM Answer Generation Planning
 
@@ -131,16 +131,21 @@ Status: complete.
 - [x] Test a product setup question.
 - [x] Test a vague clarification question, such as `Help`.
 - [x] Test an escalation question, such as `Where is my order?`.
+- [x] Test a contact handoff question, such as `Can I have the support contact number?`.
 - [x] Test an unsupported-category question, such as `What is the return policy for opened clothes?`.
 - [x] Confirm citations render only when returned by the backend.
 - [x] Confirm catalog availability questions such as `Is IBM Laptop available?` are answered from catalog data instead of generic clarification.
+- [x] Confirm catalog refinement questions such as `I am looking for fitness tracker devices, not bands` are answered from catalog data instead of generic clarification.
+- [x] Confirm catalog ranking questions such as `List top 5 products with highest reviews` and `Top 5 cheapest products` are answered from catalog data.
+- [x] Confirm watch/tracker ranking questions do not return accessory-only products as devices.
+- [x] Confirm watch-band ranking questions still return matching accessory-band products.
 
 ## Planned Backend Enhancements
 
 - [x] Add a catalog availability intent for questions such as `Is IBM Laptop available?`, `Do you have HP laptops?`, or `Is this product in stock?`.
-- [ ] Add a catalog-ranking intent for questions such as `List top 5 products with highest reviews`, `What are the most reviewed products?`, `Show highest rated products`, `Top 5 cheapest products`, and `Most expensive cameras`.
-- [ ] Answer catalog-ranking questions from `data/catalog/products.json` using deterministic sorting by `reviewCount`, `rating`, or `price` instead of routing them through RAG review-summary clarification.
-- [ ] Keep catalog-ranking answers separate from customer review summarization, which should remain product-specific.
+- [x] Add a catalog-ranking intent for questions such as `List top 5 products with highest reviews`, `What are the most reviewed products?`, `Show highest rated products`, `Top 5 cheapest products`, and `Most expensive cameras`.
+- [x] Answer catalog-ranking questions from `data/catalog/products.json` using deterministic sorting by `reviewCount`, `rating`, or `price` instead of routing them through RAG review-summary clarification.
+- [x] Keep catalog-ranking answers separate from customer review summarization, which should remain product-specific.
 
 ## Completion Summary
 
@@ -149,8 +154,14 @@ Status: complete.
 - Added customer-friendly answer rendering, starter prompts, loading state, error state, and draft preservation.
 - Added product-aware starter prompts on product detail pages.
 - Hid citations, retrieved context, and developer traces from normal support mode.
-- Added eval/developer mode at `?eval=z`, enabled by default when unlocked, for citations, retrieved context, and debug traces.
+- Added eval/developer mode at `?_m=e`, enabled by default when unlocked, for citations, retrieved context, and debug traces.
 - Added catalog availability handling for questions such as `Is IBM Laptop available?`.
+- Added catalog refinement handling for follow-up-style product searches, including accessory exclusions such as `not bands`.
+- Added catalog ranking handling for most-reviewed, highest-rated, cheapest, and most-expensive product questions.
+- Tightened watch/tracker ranking so accessories such as bands, straps, cases, and replacements are not presented as devices.
+- Split plain watch-device ranking from watch-band accessory ranking.
+- Added contact handoff handling for support phone/contact-number requests.
+- Tightened the catalog card layout so desktop catalog views can show five product tiles per row.
 - Verified with `npm run build` and `uv run python ../rag_pipeline/validate_support_agent.py`.
 
-Phase 9 should start from ticket persistence, support handoff storage, and the remaining catalog-ranking enhancement.
+Phase 9 should start from ticket persistence and support handoff storage.

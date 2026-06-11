@@ -1,0 +1,884 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>CSAgent Stakeholder Deck</title>
+    <style>
+      :root {
+        color: #172126;
+        background: #eef2f4;
+        font-family:
+          Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+          "Segoe UI", sans-serif;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        background: #dfe7ea;
+      }
+
+      .deck {
+        display: grid;
+        gap: 28px;
+        padding: 28px;
+      }
+
+      .slide {
+        position: relative;
+        display: grid;
+        grid-template-rows: auto 1fr auto;
+        min-height: 720px;
+        width: min(1180px, 100%);
+        margin: 0 auto;
+        padding: 46px 54px 34px;
+        border: 1px solid #cad6dc;
+        border-radius: 10px;
+        background: #f8fafb;
+        box-shadow: 0 16px 44px rgba(18, 52, 59, 0.12);
+        overflow: hidden;
+      }
+
+      .slide::before {
+        content: "";
+        position: absolute;
+        inset: 0 0 auto;
+        height: 8px;
+        background: linear-gradient(90deg, #12343b, #2c6f73, #d98b3a);
+      }
+
+      .kicker {
+        margin: 0 0 10px;
+        color: #4b6670;
+        font-size: 0.86rem;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      h1,
+      h2,
+      h3,
+      p {
+        margin-top: 0;
+      }
+
+      h1 {
+        max-width: 900px;
+        margin-bottom: 18px;
+        font-size: 4.25rem;
+        line-height: 0.98;
+        letter-spacing: 0;
+      }
+
+      h2 {
+        margin-bottom: 24px;
+        font-size: 2.35rem;
+        line-height: 1.08;
+        letter-spacing: 0;
+      }
+
+      h3 {
+        margin-bottom: 10px;
+        font-size: 1.05rem;
+      }
+
+      p,
+      li {
+        color: #33464f;
+        font-size: 1.05rem;
+        line-height: 1.48;
+      }
+
+      ul,
+      ol {
+        margin: 0;
+        padding-left: 22px;
+      }
+
+      li + li {
+        margin-top: 8px;
+      }
+
+      .subtitle {
+        max-width: 760px;
+        font-size: 1.28rem;
+      }
+
+      .footer {
+        display: flex;
+        justify-content: space-between;
+        gap: 18px;
+        margin-top: 28px;
+        color: #6d7f87;
+        font-size: 0.82rem;
+      }
+
+      .grid-2 {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 24px;
+        align-items: stretch;
+      }
+
+      .grid-3 {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 18px;
+      }
+
+      .grid-4 {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 14px;
+      }
+
+      .card,
+      .metric,
+      .mock-window {
+        border: 1px solid #d4dee3;
+        border-radius: 8px;
+        background: #ffffff;
+      }
+
+      .card {
+        padding: 22px;
+      }
+
+      .metric {
+        padding: 18px;
+      }
+
+      .metric strong {
+        display: block;
+        color: #12343b;
+        font-size: 2rem;
+        line-height: 1;
+      }
+
+      .metric span {
+        display: block;
+        margin-top: 7px;
+        color: #5c6e76;
+        font-size: 0.94rem;
+      }
+
+      .phase-list {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+      }
+
+      .phase {
+        display: grid;
+        grid-template-columns: 46px 1fr;
+        gap: 12px;
+        padding: 14px;
+        border: 1px solid #d4dee3;
+        border-radius: 8px;
+        background: #ffffff;
+      }
+
+      .phase-number {
+        display: grid;
+        place-items: center;
+        width: 42px;
+        height: 42px;
+        border-radius: 8px;
+        background: #12343b;
+        color: #ffffff;
+        font-weight: 900;
+      }
+
+      .phase p {
+        margin: 0;
+        font-size: 0.94rem;
+      }
+
+      .flow {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 10px;
+        align-items: center;
+      }
+
+      .flow-step {
+        min-height: 126px;
+        padding: 16px;
+        border: 1px solid #d4dee3;
+        border-radius: 8px;
+        background: #ffffff;
+      }
+
+      .flow-step strong {
+        display: block;
+        margin-bottom: 8px;
+        color: #12343b;
+      }
+
+      .pill-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+
+      .pill {
+        display: inline-flex;
+        align-items: center;
+        min-height: 30px;
+        padding: 0 10px;
+        border-radius: 999px;
+        background: #e8eef1;
+        color: #253942;
+        font-size: 0.86rem;
+        font-weight: 700;
+      }
+
+      .mock-window {
+        overflow: hidden;
+      }
+
+      .mock-bar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        min-height: 52px;
+        padding: 10px 14px;
+        border-bottom: 1px solid #d8e1e6;
+        background: #f4f7f8;
+      }
+
+      .mock-brand {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        font-weight: 900;
+      }
+
+      .mock-mark {
+        display: grid;
+        place-items: center;
+        width: 30px;
+        height: 30px;
+        border-radius: 7px;
+        background: #12343b;
+        color: #ffffff;
+      }
+
+      .mock-content {
+        padding: 16px;
+      }
+
+      .mock-search {
+        height: 34px;
+        border: 1px solid #ccd9df;
+        border-radius: 8px;
+        background: #ffffff;
+      }
+
+      .mock-products {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 12px;
+        margin-top: 14px;
+      }
+
+      .mock-product {
+        min-height: 132px;
+        padding: 12px;
+        border: 1px solid #d8e1e6;
+        border-radius: 8px;
+        background: #ffffff;
+      }
+
+      .mock-image {
+        height: 54px;
+        margin-bottom: 10px;
+        border-radius: 7px;
+        background: linear-gradient(135deg, #d9e3e6, #f1f4f5);
+      }
+
+      .mock-line {
+        height: 9px;
+        margin-top: 7px;
+        border-radius: 999px;
+        background: #d6e0e5;
+      }
+
+      .mock-line.short {
+        width: 62%;
+      }
+
+      .chat {
+        display: grid;
+        gap: 12px;
+      }
+
+      .bubble {
+        width: 82%;
+        padding: 12px 14px;
+        border-radius: 8px;
+        font-size: 0.94rem;
+        line-height: 1.4;
+      }
+
+      .bubble.user {
+        justify-self: end;
+        background: #12343b;
+        color: #ffffff;
+      }
+
+      .bubble.assistant {
+        justify-self: start;
+        border: 1px solid #d6e0e5;
+        background: #ffffff;
+        color: #33464f;
+      }
+
+      .ticket-list {
+        display: grid;
+        gap: 10px;
+      }
+
+      .ticket-row {
+        display: grid;
+        grid-template-columns: 110px 1fr 96px 96px;
+        gap: 10px;
+        align-items: center;
+        padding: 12px;
+        border: 1px solid #d6e0e5;
+        border-radius: 8px;
+        background: #ffffff;
+        font-size: 0.88rem;
+      }
+
+      .tag {
+        display: inline-flex;
+        justify-content: center;
+        padding: 4px 8px;
+        border-radius: 999px;
+        background: #e8eef1;
+        color: #243941;
+        font-size: 0.78rem;
+        font-weight: 800;
+      }
+
+      .tag.high {
+        background: #f7dfc5;
+        color: #794200;
+      }
+
+      .tag.urgent {
+        background: #f5cdcd;
+        color: #842020;
+      }
+
+      .small {
+        font-size: 0.9rem;
+      }
+
+      .mono {
+        font-family: "Cascadia Code", Consolas, monospace;
+        font-size: 0.9rem;
+      }
+
+      .code {
+        display: block;
+        padding: 16px;
+        border: 1px solid #d4dee3;
+        border-radius: 8px;
+        background: #102027;
+        color: #ecf4f6;
+        white-space: pre-wrap;
+      }
+
+      .accent {
+        color: #b76217;
+      }
+
+      @media print {
+        body {
+          background: #ffffff;
+        }
+
+        .deck {
+          gap: 0;
+          padding: 0;
+        }
+
+        .slide {
+          min-height: 100vh;
+          width: 100%;
+          margin: 0;
+          border: 0;
+          border-radius: 0;
+          box-shadow: none;
+          page-break-after: always;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="deck">
+      <section class="slide">
+        <div>
+          <p class="kicker">CSAgent stakeholder overview</p>
+          <h1>Local ecommerce support agent with RAG, chat, and ticket handoff</h1>
+          <p class="subtitle">
+            A local-first Electronics storefront that evolved into a grounded customer
+            support assistant using LangChain, LangGraph, Chroma retrieval, and a
+            lightweight support-ticket workflow.
+          </p>
+        </div>
+        <div class="grid-4">
+          <div class="metric"><strong>50</strong><span>curated catalog products</span></div>
+          <div class="metric"><strong>907</strong><span>indexed support chunks</span></div>
+          <div class="metric"><strong>19</strong><span>support-agent validations passed</span></div>
+          <div class="metric"><strong>52</strong><span>documented test/eval cases</span></div>
+        </div>
+        <div class="footer"><span>Prepared for stakeholders</span><span>Last updated: 2026-06-11</span></div>
+      </section>
+
+      <section class="slide">
+        <div>
+          <p class="kicker">Project objective</p>
+          <h2>Build a realistic local demo of ecommerce support automation</h2>
+        </div>
+        <div class="grid-2">
+          <div class="card">
+            <h3>Business goal</h3>
+            <ul>
+              <li>Demonstrate how a support assistant can answer product and policy questions from trusted context.</li>
+              <li>Keep customer-facing answers concise, grounded, and honest about unsupported requests.</li>
+              <li>Show a path from self-service resolution to human handoff when the bot should not answer alone.</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3>Engineering goal</h3>
+            <ul>
+              <li>Use a local dataset and local-first persistence so the full workflow is inspectable.</li>
+              <li>Separate catalog, retrieval, agent routing, answer generation, UI, and ticket persistence.</li>
+              <li>Build repeatable validations before introducing more provider-dependent LLM behavior.</li>
+            </ul>
+          </div>
+        </div>
+        <div class="footer"><span>Objective</span><span>01</span></div>
+      </section>
+
+      <section class="slide">
+        <div>
+          <p class="kicker">Delivery approach</p>
+          <h2>Phased build from storefront to support workflow</h2>
+        </div>
+        <div class="phase-list">
+          <div class="phase"><div class="phase-number">0</div><p><strong>Setup</strong><br />Project structure, backend baseline, planning docs.</p></div>
+          <div class="phase"><div class="phase-number">1</div><p><strong>Data layer</strong><br />50-product Electronics catalog from UCSD Amazon metadata.</p></div>
+          <div class="phase"><div class="phase-number">2</div><p><strong>UI baseline</strong><br />React catalog, cards, detail page, responsive layout.</p></div>
+          <div class="phase"><div class="phase-number">3</div><p><strong>Frontend logic</strong><br />Search, filters, sorting, local cart.</p></div>
+          <div class="phase"><div class="phase-number">4</div><p><strong>Backend API</strong><br />FastAPI products, categories, reviews, CORS.</p></div>
+          <div class="phase"><div class="phase-number">5</div><p><strong>Knowledge base</strong><br />Product docs, policies, reviews, seed tickets.</p></div>
+          <div class="phase"><div class="phase-number">6</div><p><strong>RAG pipeline</strong><br />Chunking, embeddings, Chroma, retrieval, cited answers.</p></div>
+          <div class="phase"><div class="phase-number">7</div><p><strong>Agent workflow</strong><br />LangGraph classification, routing, escalation logic.</p></div>
+          <div class="phase"><div class="phase-number">8</div><p><strong>Chat UI</strong><br />Customer chat, eval mode, product-aware prompts.</p></div>
+          <div class="phase"><div class="phase-number">9</div><p><strong>Tickets</strong><br />Confirmed handoff, local persistence, support console.</p></div>
+        </div>
+        <div class="footer"><span>Approach</span><span>02</span></div>
+      </section>
+
+      <section class="slide">
+        <div>
+          <p class="kicker">Solution architecture</p>
+          <h2>Clear separation between customer UI, APIs, retrieval, and workflow policy</h2>
+        </div>
+        <div class="flow">
+          <div class="flow-step"><strong>React/Vite UI</strong><span>Catalog, cart, product detail, support chat, ticket console.</span></div>
+          <div class="flow-step"><strong>FastAPI</strong><span>Catalog API, chat endpoint, ticket CRUD endpoints.</span></div>
+          <div class="flow-step"><strong>LangGraph</strong><span>Intent, routing, context assessment, answer/clarify/escalate.</span></div>
+          <div class="flow-step"><strong>LangChain + Chroma</strong><span>Document loading, chunking, vector retrieval, citation context.</span></div>
+          <div class="flow-step"><strong>Local data</strong><span>Catalog JSON, markdown KB, reviews, seed/runtime tickets.</span></div>
+        </div>
+        <div class="card" style="margin-top: 24px">
+          <h3>Key principle</h3>
+          <p>
+            The assistant only answers when it has grounded product, catalog, policy, or retrieved support context. Otherwise it asks for clarification or offers a ticket handoff.
+          </p>
+        </div>
+        <div class="footer"><span>Architecture</span><span>03</span></div>
+      </section>
+
+      <section class="slide">
+        <div>
+          <p class="kicker">Technology stack</p>
+          <h2>Local-first stack with a provider-ready RAG path</h2>
+        </div>
+        <div class="grid-3">
+          <div class="card">
+            <h3>Frontend</h3>
+            <div class="pill-row">
+              <span class="pill">React</span><span class="pill">Vite</span><span class="pill">CSS</span><span class="pill">Hash routing</span>
+            </div>
+            <p class="small">Supports catalog browsing, cart, chat, eval mode, and support-console mode.</p>
+          </div>
+          <div class="card">
+            <h3>Backend</h3>
+            <div class="pill-row">
+              <span class="pill">FastAPI</span><span class="pill">Pydantic</span><span class="pill">uv</span><span class="pill">JSON storage</span>
+            </div>
+            <p class="small">Serves product/category/review data, chat, and ticket APIs.</p>
+          </div>
+          <div class="card">
+            <h3>Agent + RAG</h3>
+            <div class="pill-row">
+              <span class="pill">LangChain</span><span class="pill">LangGraph</span><span class="pill">Chroma</span><span class="pill">Nebius</span><span class="pill">Claude-ready</span>
+            </div>
+            <p class="small">Uses Nebius embeddings today; Claude final answers are enabled when a key is configured.</p>
+          </div>
+        </div>
+        <div class="footer"><span>Tech stack</span><span>04</span></div>
+      </section>
+
+      <section class="slide">
+        <div>
+          <p class="kicker">Data foundation</p>
+          <h2>Grounded support starts with clean, traceable local data</h2>
+        </div>
+        <div class="grid-2">
+          <div class="card">
+            <h3>Catalog and source data</h3>
+            <ul>
+              <li>UCSD/McAuley Lab Amazon Reviews 2023 Electronics metadata.</li>
+              <li>50 normalized storefront products with price, rating, images, details, features, and categories.</li>
+              <li>Source samples retained under `data/raw/` for traceability.</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3>Support knowledge base</h3>
+            <ul>
+              <li>250 product support markdown docs.</li>
+              <li>4 global store policy docs.</li>
+              <li>145 customer review samples.</li>
+              <li>Seed tickets plus runtime tickets for handoff workflows.</li>
+            </ul>
+          </div>
+        </div>
+        <div class="footer"><span>Data</span><span>05</span></div>
+      </section>
+
+      <section class="slide">
+        <div>
+          <p class="kicker">RAG and answer generation</p>
+          <h2>Retrieve, assess, then answer with citations or ask for more context</h2>
+        </div>
+        <div class="grid-2">
+          <div class="card">
+            <h3>Current retrieval</h3>
+            <ul>
+              <li>907 chunks persisted in Chroma.</li>
+              <li>Nebius `Qwen/Qwen3-Embedding-8B` embeddings.</li>
+              <li>Hybrid behavior combines vector search and lexical signals.</li>
+              <li>Catalog ranking and availability use structured catalog data directly.</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3>Final answer path</h3>
+            <ul>
+              <li>LangChain `ChatPromptTemplate` defines the support persona.</li>
+              <li>System prompt sets tone, grounding rules, and local-demo boundaries.</li>
+              <li>User prompt injects the question plus cited source context.</li>
+              <li>Deterministic formatter remains fallback when Claude is unavailable.</li>
+            </ul>
+          </div>
+        </div>
+        <div class="footer"><span>RAG</span><span>06</span></div>
+      </section>
+
+      <section class="slide">
+        <div>
+          <p class="kicker">Agent workflow</p>
+          <h2>LangGraph makes support routing explicit and inspectable</h2>
+        </div>
+        <div class="flow">
+          <div class="flow-step"><strong>Classify</strong><span>Policy, product, troubleshooting, catalog, escalation, unsupported.</span></div>
+          <div class="flow-step"><strong>Plan</strong><span>Choose retrieval query, candidate count, and routing path.</span></div>
+          <div class="flow-step"><strong>Retrieve</strong><span>Fetch relevant KB chunks or use structured catalog logic.</span></div>
+          <div class="flow-step"><strong>Assess</strong><span>Check whether context is sufficient for a grounded answer.</span></div>
+          <div class="flow-step"><strong>Respond</strong><span>Answer, clarify, or prepare handoff metadata.</span></div>
+        </div>
+        <div class="card" style="margin-top: 24px">
+          <h3>Important guardrail</h3>
+          <p>
+            Account-specific, order-specific, payment-specific, unsafe product, and support contact requests are handled as handoff candidates instead of hallucinated answers.
+          </p>
+        </div>
+        <div class="footer"><span>Agent workflow</span><span>07</span></div>
+      </section>
+
+      <section class="slide">
+        <div>
+          <p class="kicker">UI screenshot</p>
+          <h2>Customer storefront and catalog browsing</h2>
+        </div>
+        <div class="mock-window">
+          <div class="mock-bar">
+            <div class="mock-brand"><span class="mock-mark">CS</span> Electronics catalog</div>
+            <div class="pill-row"><span class="pill">Search</span><span class="pill">Support</span><span class="pill">Cart</span></div>
+          </div>
+          <div class="mock-content">
+            <div class="mock-search"></div>
+            <div class="mock-products">
+              <div class="mock-product"><div class="mock-image"></div><div class="mock-line"></div><div class="mock-line short"></div><div class="mock-line"></div></div>
+              <div class="mock-product"><div class="mock-image"></div><div class="mock-line"></div><div class="mock-line short"></div><div class="mock-line"></div></div>
+              <div class="mock-product"><div class="mock-image"></div><div class="mock-line"></div><div class="mock-line short"></div><div class="mock-line"></div></div>
+              <div class="mock-product"><div class="mock-image"></div><div class="mock-line"></div><div class="mock-line short"></div><div class="mock-line"></div></div>
+              <div class="mock-product"><div class="mock-image"></div><div class="mock-line"></div><div class="mock-line short"></div><div class="mock-line"></div></div>
+              <div class="mock-product"><div class="mock-image"></div><div class="mock-line"></div><div class="mock-line short"></div><div class="mock-line"></div></div>
+            </div>
+          </div>
+        </div>
+        <p class="small" style="margin-top: 14px">Live capture URL: <span class="mono">http://127.0.0.1:5173/</span></p>
+        <div class="footer"><span>UI</span><span>08</span></div>
+      </section>
+
+      <section class="slide">
+        <div>
+          <p class="kicker">UI screenshot</p>
+          <h2>Support chat answers product and policy questions</h2>
+        </div>
+        <div class="grid-2">
+          <div class="mock-window">
+            <div class="mock-bar"><strong>Product detail</strong><span class="pill">Support</span></div>
+            <div class="mock-content">
+              <div class="mock-image" style="height: 150px"></div>
+              <div class="mock-line"></div>
+              <div class="mock-line short"></div>
+              <div class="pill-row" style="margin-top: 16px"><span class="pill">How do I set this product up?</span><span class="pill">Return policy</span></div>
+            </div>
+          </div>
+          <div class="mock-window">
+            <div class="mock-bar"><strong>Support chat</strong><span class="tag">Customer mode</span></div>
+            <div class="mock-content chat">
+              <div class="bubble user">How do I set up the JBL speaker?</div>
+              <div class="bubble assistant">Based on product support context, start by charging the device, turning it on, and pairing it from Bluetooth settings. The answer remains grounded in retrieved sources.</div>
+              <div class="bubble user">Where is my order?</div>
+              <div class="bubble assistant">I do not have access to personal order or tracking details. I can help prepare this as a support ticket.</div>
+            </div>
+          </div>
+        </div>
+        <div class="footer"><span>UI</span><span>09</span></div>
+      </section>
+
+      <section class="slide">
+        <div>
+          <p class="kicker">UI screenshot</p>
+          <h2>Eval mode exposes evidence without cluttering customer mode</h2>
+        </div>
+        <div class="mock-window">
+          <div class="mock-bar"><strong>Support chat</strong><span class="tag">?_m=e</span></div>
+          <div class="mock-content">
+            <div class="grid-2">
+              <div class="chat">
+                <div class="bubble user">What is the return policy?</div>
+                <div class="bubble assistant">The support answer appears here in customer-friendly language.</div>
+              </div>
+              <div class="card">
+                <h3>Developer trace</h3>
+                <ul>
+                  <li>Intent: `store_policy`</li>
+                  <li>Graph path: classify -> retrieve -> assess -> answer</li>
+                  <li>Context sufficient: true</li>
+                  <li>Sources: returns policy, refund policy</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+        <p class="small" style="margin-top: 14px">Live capture URL: <span class="mono">http://127.0.0.1:5173/?_m=e</span></p>
+        <div class="footer"><span>UI</span><span>10</span></div>
+      </section>
+
+      <section class="slide">
+        <div>
+          <p class="kicker">UI screenshot</p>
+          <h2>Ticket console supports local operator review</h2>
+        </div>
+        <div class="mock-window">
+          <div class="mock-bar">
+            <strong>Support tickets</strong>
+            <div class="pill-row"><span class="pill">Open</span><span class="pill">High priority</span><span class="pill">Resolved</span></div>
+          </div>
+          <div class="mock-content ticket-list">
+            <div class="ticket-row"><strong>TICKET-0026</strong><span>Customer needs delivery help.</span><span class="tag high">high</span><span class="tag">open</span></div>
+            <div class="ticket-row"><strong>TICKET-0027</strong><span>Support contact requested.</span><span class="tag">normal</span><span class="tag">open</span></div>
+            <div class="ticket-row"><strong>TICKET-0014</strong><span>Product defect reported in seed data.</span><span class="tag urgent">urgent</span><span class="tag">seed</span></div>
+          </div>
+        </div>
+        <p class="small" style="margin-top: 14px">Live capture URL: <span class="mono">http://127.0.0.1:5173/?_m=s#/support/tickets</span></p>
+        <div class="footer"><span>UI</span><span>11</span></div>
+      </section>
+
+      <section class="slide">
+        <div>
+          <p class="kicker">Testing and evaluation</p>
+          <h2>Validation covers the agent, ticket workflow, frontend build, and eval dataset</h2>
+        </div>
+        <div class="grid-4">
+          <div class="metric"><strong>19</strong><span>support-agent cases passed</span></div>
+          <div class="metric"><strong>12</strong><span>ticket workflow checks passed</span></div>
+          <div class="metric"><strong>1</strong><span>frontend production build passed</span></div>
+          <div class="metric"><strong>20</strong><span>FCR eval cases defined</span></div>
+        </div>
+        <div class="card" style="margin-top: 24px">
+          <h3>Executable checks</h3>
+          <code class="code">cd backend
+uv run python ../rag_pipeline/validate_support_agent.py
+uv run python ../rag_pipeline/validate_ticket_workflow.py
+
+cd ../frontend
+npm run build</code>
+        </div>
+        <div class="footer"><span>Testing</span><span>12</span></div>
+      </section>
+
+      <section class="slide">
+        <div>
+          <p class="kicker">Evaluation readiness</p>
+          <h2>First-contact resolution cases are defined and ready for automation</h2>
+        </div>
+        <div class="grid-2">
+          <div class="card">
+            <h3>Dataset mix</h3>
+            <ul>
+              <li>11 expected resolved cases.</li>
+              <li>7 expected escalations.</li>
+              <li>2 expected clarification cases.</li>
+              <li>Each case includes intent, outcome, evidence type, and ticket expectations where relevant.</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3>Next automation step</h3>
+            <ul>
+              <li>Load `data/support/support_eval_queries.json`.</li>
+              <li>Run each question through the support agent.</li>
+              <li>Compare actual intent, outcome, evidence, and handoff metadata.</li>
+              <li>Report first-contact-resolution rate and failures.</li>
+            </ul>
+          </div>
+        </div>
+        <div class="footer"><span>Evaluation</span><span>13</span></div>
+      </section>
+
+      <section class="slide">
+        <div>
+          <p class="kicker">Current status</p>
+          <h2>The Phase 0-9 scope is complete; enhancement track has started</h2>
+        </div>
+        <div class="grid-2">
+          <div class="card">
+            <h3>Complete</h3>
+            <ul>
+              <li>Local storefront and backend APIs.</li>
+              <li>RAG pipeline and Chroma index.</li>
+              <li>LangGraph support agent.</li>
+              <li>Chat UI and eval mode.</li>
+              <li>Ticket persistence and support console.</li>
+              <li>LLM persona prompt template with deterministic fallback.</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3>Known limitations</h3>
+            <ul>
+              <li>Runtime tickets use local JSON, not a production database.</li>
+              <li>Support console is URL-mode gated, not auth-secured.</li>
+              <li>No real phone, email, SMS, CRM, SLA, or operator assignment integration.</li>
+              <li>OpenAI embeddings remain blocked by quota.</li>
+            </ul>
+          </div>
+        </div>
+        <div class="footer"><span>Status</span><span>14</span></div>
+      </section>
+
+      <section class="slide">
+        <div>
+          <p class="kicker">Recommended next steps</p>
+          <h2>Move from demo-complete to evaluation-complete</h2>
+        </div>
+        <ol>
+          <li>Build the automated first-contact-resolution eval runner.</li>
+          <li>Add product-manual-style documents as a first-class knowledge source.</li>
+          <li>Run LLM answer validation with a configured Claude/Anthropic key.</li>
+          <li>Add auth and database persistence if the support console becomes more than a local demo.</li>
+          <li>Optionally evaluate Pinecone or another managed vector database for cloud deployment.</li>
+        </ol>
+        <div class="footer"><span>Next steps</span><span>15</span></div>
+      </section>
+
+      <section class="slide">
+        <div>
+          <p class="kicker">Appendix</p>
+          <h2>Implementation details by phase</h2>
+        </div>
+        <div class="grid-2">
+          <div class="card">
+            <h3>Phases 0-4</h3>
+            <ul>
+              <li><strong>0:</strong> Repo structure, FastAPI starter, docs.</li>
+              <li><strong>1:</strong> Catalog builder and validator, normalized product/category JSON.</li>
+              <li><strong>2:</strong> React/Vite catalog and product detail UI.</li>
+              <li><strong>3:</strong> Search, category filters, sorting, local cart.</li>
+              <li><strong>4:</strong> FastAPI product/category/review endpoints and frontend API integration.</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3>Phases 5-9</h3>
+            <ul>
+              <li><strong>5:</strong> Product KB, policies, review samples, seed tickets.</li>
+              <li><strong>6:</strong> Chunking, embeddings, Chroma, retrieval, cited answers.</li>
+              <li><strong>7:</strong> LangGraph support-agent workflow.</li>
+              <li><strong>8:</strong> Chat UI, eval mode, product-aware prompts.</li>
+              <li><strong>9:</strong> Ticket schema, repository, APIs, chat handoff, support console.</li>
+            </ul>
+          </div>
+        </div>
+        <div class="footer"><span>Appendix</span><span>16</span></div>
+      </section>
+
+      <section class="slide">
+        <div>
+          <p class="kicker">Appendix</p>
+          <h2>Key files and references</h2>
+        </div>
+        <div class="grid-2">
+          <div class="card">
+            <h3>Implementation</h3>
+            <ul>
+              <li>`backend/app/main.py`</li>
+              <li>`backend/app/ticket_schema.py`</li>
+              <li>`backend/app/ticket_repository.py`</li>
+              <li>`frontend/src/main.jsx`</li>
+              <li>`frontend/src/styles.css`</li>
+              <li>`rag_pipeline/support_agent.py`</li>
+              <li>`rag_pipeline/answer_generation.py`</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3>Docs and reports</h3>
+            <ul>
+              <li>`PROJECT_STATUS.md`</li>
+              <li>`docs/local-runbook.md`</li>
+              <li>`docs/test-case-report.csv`</li>
+              <li>`docs/ticket-schema.md`</li>
+              <li>`docs/first-contact-resolution-eval.md`</li>
+              <li>`docs/learning-notes.md`</li>
+            </ul>
+          </div>
+        </div>
+        <div class="footer"><span>Appendix</span><span>17</span></div>
+      </section>
+    </main>
+  </body>
+</html>

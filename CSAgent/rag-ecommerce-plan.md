@@ -266,14 +266,17 @@ Learning focus:
 
 Connect the ecommerce frontend to the support chat API.
 
-Status: next.
+Status: complete.
 
 Core features:
 
-- Chat panel or support page
-- Product-aware questions
-- Display answer citations
-- Loading and error states
+- Floating support chat panel
+- Product-aware starter prompts
+- Customer-facing answers in normal support mode
+- Eval/developer evidence mode with `?_m=e`
+- Loading, error, and draft-preservation states
+- Catalog availability and ranking questions routed through catalog data
+- Support contact and handoff questions routed to escalation behavior
 
 Learning focus:
 
@@ -281,26 +284,73 @@ Learning focus:
 - API calls from React
 - Conversational UI states
 
-## Phase 9: Ticket Fallback
+## Phase 9: Support Workflow
 
-Add support ticket creation when the agent cannot answer confidently.
+Add ticket persistence and support workflow extensions so escalation and handoff responses can become trackable local support tickets.
 
 Suggested endpoints:
 
 - `POST /tickets`
 - `GET /tickets`
+- `GET /tickets/{ticket_id}`
+- `PATCH /tickets/{ticket_id}`
 
 Core features:
 
-- Create a ticket from chat
-- Store ticket locally
-- Show ticket confirmation
+- Create a ticket from a confirmed chat handoff
+- Store runtime tickets locally without overwriting seed tickets
+- Show ticket confirmation in the chat UI
+- Add a lightweight support console for reviewing open tickets
+- Allow status and priority updates
+- Keep normal support mode clean while eval mode shows handoff/debug metadata
 
 Learning focus:
 
 - Agent escalation workflow
 - Confidence handling
 - Persisting support requests
+- Local workflow state
+- Backend CRUD APIs
+
+## Later RAG Enhancement: LangChain Prompted LLM Answers
+
+Add LangChain chat prompt templates for final answer generation after retrieval and context sufficiency checks.
+
+Core features:
+
+- Define a customer-support persona for the LLM.
+- Use a `ChatPromptTemplate` that includes system/persona instructions, retrieved context, citation rules, and the customer question.
+- Require grounded answers that only use retrieved support/catalog context.
+- Keep the deterministic answer formatter as fallback when the LLM provider is unavailable.
+- Preserve the existing `/chat` response shape.
+- Show prompt/debug metadata only in eval mode.
+
+Learning focus:
+
+- LangChain prompt templates
+- Persona design
+- Grounded LLM generation
+- Fallback behavior
+- Eval/debug observability
+
+## Later RAG Enhancement: Product Manuals
+
+Add product manual or manual-excerpt documents as first-class retrieval sources.
+
+Core features:
+
+- Generate or ingest `manual.md` or `manual_excerpt.md` documents per product.
+- Add a `product_manual` document type to the loader metadata.
+- Include manuals in chunking, embedding, Chroma indexing, hybrid retrieval, and citations.
+- Add validation cases for manual-style questions, such as installation steps, button behavior, care instructions, and safety notes.
+- Preserve the existing fallback behavior when manuals do not contain enough context.
+
+Learning focus:
+
+- RAG source coverage
+- Metadata design
+- Retrieval validation
+- Manual-style support grounding
 
 ## Target Demo
 
