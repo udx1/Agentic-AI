@@ -1,0 +1,71 @@
+[
+  {
+    "id": "computers-storage",
+    "name": "Computers & Storage",
+    "description": "Laptops, computer components, keyboards, memory cards, and storage devices.",
+    "subcategories": [
+      "Data Storage",
+      "DVI",
+      "External Hard Drives",
+      "Graphics Cards",
+      "Keyboards",
+      "Micro SD Cards",
+      "Network Cards",
+      "Traditional Laptops"
+    ]
+  },
+  {
+    "id": "audio-car",
+    "name": "Audio & Car",
+    "description": "Speakers, headphones accessories, car audio, and vehicle installation parts.",
+    "subcategories": [
+      "Car Dash Mounting Kits",
+      "Coaxial Speakers",
+      "Component Subwoofers",
+      "Earpads",
+      "Portable Bluetooth Speakers",
+      "Radio Wiring Harnesses",
+      "Speaker",
+      "Vehicle Audio & Video Installation"
+    ]
+  },
+  {
+    "id": "cameras-optics",
+    "name": "Cameras & Optics",
+    "description": "Cameras, lenses, filters, batteries, optics, and mounting accessories.",
+    "subcategories": [
+      "Camera & Photo",
+      "Camera Batteries",
+      "Eyepieces",
+      "Film Cameras",
+      "Filter Sets",
+      "Fish Finders & Depth Finders",
+      "Neutral Density Filters",
+      "SLR Camera Lenses",
+      "Surveillance Housing & Mounting Brackets"
+    ]
+  },
+  {
+    "id": "mobile-accessories",
+    "name": "Mobile Accessories",
+    "description": "Cases, covers, wearable bands, stands, keyboard cases, and replacement screens.",
+    "subcategories": [
+      "Arm & Wristband Accessories",
+      "Cases",
+      "Covers",
+      "Hard Shell Cases",
+      "Keyboard Cases",
+      "Replacement Screens",
+      "Stands"
+    ]
+  },
+  {
+    "id": "cables-parts",
+    "name": "Cables & Parts",
+    "description": "Cables, remote controls, and small replacement electronics parts.",
+    "subcategories": [
+      "Remote Controls",
+      "USB Cables"
+    ]
+  }
+]
