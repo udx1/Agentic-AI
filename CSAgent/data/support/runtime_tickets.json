@@ -20,8 +20,243 @@
       "retrievalSufficient": false
     },
     "contactPreference": "unknown",
+    "idempotencyKey": null,
     "internalNotes": [],
     "createdAt": "2026-06-11T03:08:24.849184Z",
     "updatedAt": "2026-06-11T03:08:24.849184Z"
+  },
+  {
+    "id": "TICKET-0027",
+    "status": "open",
+    "priority": "normal",
+    "issueType": "order",
+    "summary": "Where is my Order?",
+    "source": "chat",
+    "product": {
+      "productId": null,
+      "productTitle": null,
+      "category": null,
+      "subcategory": null
+    },
+    "handoff": {
+      "question": "Where is my Order?",
+      "conversationExcerpt": "Where is my Order?",
+      "escalationReason": "Question appears to need account, order, tracking, or personal support data.",
+      "agentIntent": "escalation_candidate",
+      "retrievalSufficient": false
+    },
+    "contactPreference": "unknown",
+    "idempotencyKey": "1781224893095-assistant",
+    "internalNotes": [],
+    "createdAt": "2026-06-12T00:42:02.974876Z",
+    "updatedAt": "2026-06-12T00:42:02.974876Z"
+  },
+  {
+    "id": "TICKET-0028",
+    "status": "open",
+    "priority": "normal",
+    "issueType": "order",
+    "summary": "where is my order?",
+    "source": "chat",
+    "product": {
+      "productId": null,
+      "productTitle": null,
+      "category": null,
+      "subcategory": null
+    },
+    "handoff": {
+      "question": "where is my order?",
+      "conversationExcerpt": "where is my order?",
+      "escalationReason": "Question appears to need account, order, tracking, or personal support data.",
+      "agentIntent": "escalation_candidate",
+      "retrievalSufficient": false
+    },
+    "contactPreference": "unknown",
+    "idempotencyKey": "1781225649372-assistant",
+    "internalNotes": [],
+    "createdAt": "2026-06-12T00:54:14.128483Z",
+    "updatedAt": "2026-06-12T00:54:14.128483Z"
+  },
+  {
+    "id": "TICKET-0029",
+    "status": "open",
+    "priority": "normal",
+    "issueType": "order",
+    "summary": "Where is my Order?",
+    "source": "chat",
+    "product": {
+      "productId": null,
+      "productTitle": null,
+      "category": null,
+      "subcategory": null
+    },
+    "handoff": {
+      "question": "Where is my Order?",
+      "conversationExcerpt": "Where is my Order?",
+      "escalationReason": "Question appears to need account, order, tracking, or personal support data.",
+      "agentIntent": "escalation_candidate",
+      "retrievalSufficient": false
+    },
+    "contactPreference": "unknown",
+    "idempotencyKey": "1781226016251-assistant",
+    "internalNotes": [],
+    "createdAt": "2026-06-12T01:00:57.281349Z",
+    "updatedAt": "2026-06-12T01:00:57.281349Z"
+  },
+  {
+    "id": "TICKET-0030",
+    "status": "open",
+    "priority": "normal",
+    "issueType": "order",
+    "summary": "Where is my Order?",
+    "source": "chat",
+    "product": {
+      "productId": null,
+      "productTitle": null,
+      "category": null,
+      "subcategory": null
+    },
+    "handoff": {
+      "question": "Where is my Order?",
+      "conversationExcerpt": "Where is my Order?",
+      "escalationReason": "Question appears to need account, order, tracking, or personal support data.",
+      "agentIntent": "escalation_candidate",
+      "retrievalSufficient": false
+    },
+    "contactPreference": "unknown",
+    "idempotencyKey": "1781226482422-assistant",
+    "internalNotes": [],
+    "createdAt": "2026-06-12T01:08:15.581191Z",
+    "updatedAt": "2026-06-12T01:08:15.581191Z"
+  },
+  {
+    "id": "TICKET-0031",
+    "status": "open",
+    "priority": "normal",
+    "issueType": "order",
+    "summary": "Where is my Order?",
+    "source": "chat",
+    "product": {
+      "productId": null,
+      "productTitle": null,
+      "category": null,
+      "subcategory": null
+    },
+    "handoff": {
+      "question": "Where is my Order?",
+      "conversationExcerpt": "Where is my Order?",
+      "escalationReason": "Question appears to need account, order, tracking, or personal support data.",
+      "agentIntent": "escalation_candidate",
+      "retrievalSufficient": false
+    },
+    "contactPreference": "unknown",
+    "idempotencyKey": "1781227221389-assistant",
+    "internalNotes": [],
+    "createdAt": "2026-06-12T01:20:28.998779Z",
+    "updatedAt": "2026-06-12T01:20:28.998779Z"
+  },
+  {
+    "id": "TICKET-0032",
+    "status": "open",
+    "priority": "normal",
+    "issueType": "contact_request",
+    "summary": "Can I have the support number.",
+    "source": "chat",
+    "product": {
+      "productId": null,
+      "productTitle": null,
+      "category": null,
+      "subcategory": null
+    },
+    "handoff": {
+      "question": "Can I have the support number.",
+      "conversationExcerpt": "Can I have the support number.",
+      "escalationReason": "Question asks for customer support contact or handoff details.",
+      "agentIntent": "escalation_candidate",
+      "retrievalSufficient": false
+    },
+    "contactPreference": "unknown",
+    "idempotencyKey": "1781232771425-assistant",
+    "internalNotes": [],
+    "createdAt": "2026-06-12T02:53:02.253204Z",
+    "updatedAt": "2026-06-12T02:53:02.253204Z"
+  },
+  {
+    "id": "TICKET-0033",
+    "status": "open",
+    "priority": "normal",
+    "issueType": "contact_request",
+    "summary": "what is the support number",
+    "source": "chat",
+    "product": {
+      "productId": null,
+      "productTitle": null,
+      "category": null,
+      "subcategory": null
+    },
+    "handoff": {
+      "question": "what is the support number",
+      "conversationExcerpt": "what is the support number",
+      "escalationReason": "Question asks for customer support contact or handoff details.",
+      "agentIntent": "escalation_candidate",
+      "retrievalSufficient": false
+    },
+    "contactPreference": "unknown",
+    "idempotencyKey": "1781234070525-assistant",
+    "internalNotes": [],
+    "createdAt": "2026-06-12T03:14:41.124373Z",
+    "updatedAt": "2026-06-12T03:14:41.124373Z"
+  },
+  {
+    "id": "TICKET-0034",
+    "status": "open",
+    "priority": "normal",
+    "issueType": "contact_request",
+    "summary": "What is the support phone number.",
+    "source": "chat",
+    "product": {
+      "productId": null,
+      "productTitle": null,
+      "category": null,
+      "subcategory": null
+    },
+    "handoff": {
+      "question": "What is the support phone number.",
+      "conversationExcerpt": "What is the support phone number.",
+      "escalationReason": "Question asks for customer support contact or handoff details.",
+      "agentIntent": "escalation_candidate",
+      "retrievalSufficient": false
+    },
+    "contactPreference": "unknown",
+    "idempotencyKey": "1781235068254-assistant",
+    "internalNotes": [],
+    "createdAt": "2026-06-12T03:31:16.603844Z",
+    "updatedAt": "2026-06-12T03:31:16.603844Z"
+  },
+  {
+    "id": "TICKET-0035",
+    "status": "open",
+    "priority": "normal",
+    "issueType": "order",
+    "summary": "Where is my Order?",
+    "source": "chat",
+    "product": {
+      "productId": null,
+      "productTitle": null,
+      "category": null,
+      "subcategory": null
+    },
+    "handoff": {
+      "question": "Where is my Order?",
+      "conversationExcerpt": "Where is my Order?",
+      "escalationReason": "Question appears to need account, order, tracking, or personal support data.",
+      "agentIntent": "escalation_candidate",
+      "retrievalSufficient": false
+    },
+    "contactPreference": "unknown",
+    "idempotencyKey": "1781235530011-assistant",
+    "internalNotes": [],
+    "createdAt": "2026-06-12T03:39:03.158006Z",
+    "updatedAt": "2026-06-12T03:39:03.158006Z"
   }
 ]
