@@ -1,7 +1,5 @@
 from pydantic import BaseModel, Field
 from typing import List, Optional
-# Reuse your existing RuleResult model for identical structure and field handling
-#from vc_deal_review.Compliance.models import RuleResult
 from vc_deal_review.schema.report import ReportResult
 
 

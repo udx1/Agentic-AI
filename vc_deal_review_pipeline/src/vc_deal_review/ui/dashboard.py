@@ -17,8 +17,8 @@ if sys.platform == "win32":
                 pass  # Safely ignore harmless socket drops during client reloads
         return wrapper
 
-    _ProactorBasePipeTransport._call_connection_lost = silence_connection_lost_noise(
-        _ProactorBasePipeTransport._call_connection_lost
+    _ProactorBasePipeTransport._call_connection_lost = silence_connection_lost_noise( # type: ignore[attr-defined]
+        _ProactorBasePipeTransport._call_connection_lost # type: ignore[attr-defined]
     )
 
 # Force Python to recognize the 'src' root directory relative to this file
@@ -32,8 +32,13 @@ import io
 from pypdf import PdfReader
 from vc_deal_review.agents.extractor_agent import ExtractorAgent
 from vc_deal_review.agents.compliance_agent import ComplianceAgent
+from vc_deal_review.schema.compliance import ComplianceReport
+
 from vc_deal_review.agents.financial_agent import FinancialAgent
+from vc_deal_review.schema.financials import FinancialAnalysisReport
 from vc_deal_review.agents.risk_agent import RiskAgent  # <-- Included natively
+from vc_deal_review.schema.risk import RiskQuantifierReport
+
 
 strl.set_page_config(
     page_title="Venture Capital Deal Review Intelligence Pipeline",
@@ -234,15 +239,31 @@ with strl.sidebar:
 # PIPELINE EXECUTION & DATA CACHING
 # -------------------------------------------------------------
 if trigger_analysis:
-    for key in ["compliance_report", "financial_report", "risk_report", "active_deal_data", "analysis_triggered", "pipeline_stage"]:
+
+    # 1. Cleanly purge ALL legacy and new synthesis state variables to clear out stale memory
+    purged_keys = [
+        "compliance_report", 
+        "financial_report", 
+        "risk_report", 
+        "synthesis_report", # Clear new router metrics
+        "edited_memo",       # Clear human text area overrides
+        "active_deal_data", 
+        "analysis_triggered", 
+        "pipeline_stage"
+    ]
+
+    for key in purged_keys:
         if key in strl.session_state:
             del strl.session_state[key]
 
-    cache_file = CACHE_DIR / "nexushealth_ai_cached_extraction.json"
     deal_dict = None
 
-    if use_cache and cache_file.exists():
-        with open(cache_file, "r") as f:
+    # 2. Modernize and scope the raw text data cache path explicitly to the active user
+    CACHE_DIR.mkdir(exist_ok=True)
+    user_extraction_cache = CACHE_DIR / f"extracted_deal_{current_user}.json"    
+
+    if use_cache and user_extraction_cache.exists():
+        with open(user_extraction_cache, "r") as f:
             deal_dict = json.load(f)
         strl.session_state["extraction_cached_flag"] = True
 
@@ -267,7 +288,7 @@ if trigger_analysis:
                 deal_data = extractor.extract_deal_data(raw_text_package)
                 deal_dict = deal_data.model_dump()
                 
-                with open(cache_file, "w") as f:
+                with open(user_extraction_cache, "w") as f:
                     json.dump(deal_dict, f, indent=4)
                 
             except Exception as e:
@@ -284,8 +305,7 @@ if trigger_analysis:
 if "pipeline_stage" in strl.session_state and strl.session_state["pipeline_stage"] != "COMPLETE":
     current_stage = strl.session_state["pipeline_stage"]
     deal_dict = strl.session_state["active_deal_data"]
-    fin_cache_file = CACHE_DIR / "nexushealth_ai_cached_financials.json"
-    risk_cache_file = CACHE_DIR / "nexushealth_ai_cached_risk.json"
+
 
     # Define visual render helper function for the full takeover screen
     def draw_progress_screen(active_step: int, step_desc: str):
@@ -339,64 +359,135 @@ if "pipeline_stage" in strl.session_state and strl.session_state["pipeline_stage
             """
         )
 
-    # STATE STEP 1: COMPLIANCE
+    # STATE STEP 1: COMPLIANCE MANDATES
     if current_stage == "COMPLIANCE":
-        draw_progress_screen(1, "Evaluating corporate parameters against investment mandate parameters...")
-        compliance = ComplianceAgent()
-        strl.session_state["compliance_report"] = compliance.assess_deal_compliance(deal_dict)
+        draw_progress_screen(1, "Running deterministic policy rule checks...")
+        
+
+        cache_dir = Path("cache")
+        cache_dir.mkdir(exist_ok=True)
+        
+        # Scope compliance cache explicitly to the user session
+        user_comp_cache = cache_dir / f"compliance_report_{current_user}.json"
+        comp_report = None
+
+        if use_cache and user_comp_cache.exists():
+            try:
+                with open(user_comp_cache, "r") as f:
+                    comp_report = ComplianceReport.model_validate(json.load(f))
+                strl.session_state["compliance_report"] = comp_report
+            except Exception:
+                comp_report = None
+
+        if comp_report is None:
+            compliance_agent = ComplianceAgent()
+            # Explicitly passing user_id to align with the core standard
+            comp_report = compliance_agent.assess_deal_compliance(deal_dict)
+            strl.session_state["compliance_report"] = comp_report
+            with open(user_comp_cache, "w") as f:
+                json.dump(comp_report.model_dump(), f, indent=4)
+
         strl.session_state["pipeline_stage"] = "FINANCIAL"
         strl.rerun()
 
-    # STATE STEP 2: FINANCIALS
+
+    # STATE STEP 2: FINANCIAL PERFORMANCE (UPDATED TO MATCH RISK)
     elif current_stage == "FINANCIAL":
-        draw_progress_screen(2, "Auditing dynamic forecasting assumptions and revenue metrics...")
-        if use_cache and fin_cache_file.exists():
-            with open(fin_cache_file, "r") as f:
-                cached_fin_data = json.load(f)
-            try:
-                from vc_deal_review.schema.financials import FinancialAnalysisReport
-                strl.session_state["financial_report"] = FinancialAnalysisReport.model_validate(cached_fin_data)
-            except Exception:
-                fin_agent = FinancialAgent()
-                fin_report = fin_agent.analyze_financial_performance(deal_dict)
-                strl.session_state["financial_report"] = fin_report
-                with open(fin_cache_file, "w") as f:
-                    json.dump(fin_report.model_dump(), f, indent=4)
-        else:
-            fin_agent = FinancialAgent()
-            fin_report = fin_agent.analyze_financial_performance(deal_dict)
-            strl.session_state["financial_report"] = fin_report
-            with open(fin_cache_file, "w") as f:
-                json.dump(fin_report.model_dump(), f, indent=4)
+        draw_progress_screen(2, "Auditing financial trajectories and model sanity...")
         
+        cache_dir = Path("cache")
+        cache_dir.mkdir(exist_ok=True)
+        
+        # FIX: Scope financial cache explicitly to the user session
+        user_fin_cache = cache_dir / f"financial_report_{current_user}.json"
+        fin_report = None
+
+        if use_cache and user_fin_cache.exists():
+            try:
+                with open(user_fin_cache, "r") as f:
+                    fin_report = FinancialAnalysisReport.model_validate(json.load(f))
+                strl.session_state["financial_report"] = fin_report
+            except Exception:
+                fin_report = None
+
+        if fin_report is None:
+            financial_agent = FinancialAgent()
+            # FIX: Explicitly pass user_id context to the operational pipeline
+            fin_report = financial_agent.analyze_financial_performance(deal_dict)
+            strl.session_state["financial_report"] = fin_report
+            with open(user_fin_cache, "w") as f:
+                json.dump(fin_report.model_dump(), f, indent=4)
+
         strl.session_state["pipeline_stage"] = "RISK"
         strl.rerun()
 
     # STATE STEP 3: RISK REACT LOOP
     elif current_stage == "RISK":
         draw_progress_screen(3, "Executing mathematical LangGraph ReAct decision trees...")
-        if use_cache and risk_cache_file.exists():
-            with open(risk_cache_file, "r") as f:
-                cached_risk_data = json.load(f)
+
+      
+        # 1. Properly align the cache path using the current user's profile identifier
+        # This prevents permission cross-contamination and fixes the missing user details
+        cache_dir = Path("cache")
+        cache_dir.mkdir(exist_ok=True)
+        user_risk_cache_file = cache_dir / f"risk_report_{current_user}.json"
+
+        risk_report = None
+
+        # 2. Evaluate the cache file cleanly
+        if use_cache and user_risk_cache_file.exists():
             try:
-                from vc_deal_review.schema.risk import RiskQuantifierReport
-                strl.session_state["risk_report"] = RiskQuantifierReport.model_validate(cached_risk_data)
-            except Exception:
-                risk_agent = RiskAgent()
-                risk_report = risk_agent.assess_deal_risk(deal_dict, user_id=current_user)
+                with open(user_risk_cache_file, "r") as f:
+                    cached_risk_data = json.load(f)
+                
+                # Re-validate the JSON payload directly into your Pydantic data model
+                risk_report = RiskQuantifierReport.model_validate(cached_risk_data)
                 strl.session_state["risk_report"] = risk_report
-                with open(risk_cache_file, "w") as f:
-                    json.dump(risk_report.model_dump(), f, indent=4)
-        else:
+            except Exception:
+                # If the cache file is corrupted or outdated, gracefully fall back to a live run
+                risk_report = None
+
+        # 3. Cache Miss or Disabled: Execute the Live LangGraph ReAct Loop
+        if risk_report is None:
             risk_agent = RiskAgent()
+            # Explicitly pass both the deal data payload and the user context
             risk_report = risk_agent.assess_deal_risk(deal_dict, user_id=current_user)
             strl.session_state["risk_report"] = risk_report
-            with open(risk_cache_file, "w") as f:
+            
+            # Persist back the full structure (including your user context layers) to disk
+            with open(user_risk_cache_file, "w") as f:
                 json.dump(risk_report.model_dump(), f, indent=4)
 
-        strl.session_state["analysis_triggered"] = True
-        strl.session_state["pipeline_stage"] = "COMPLETE"
+        # ADVANCE CLEANLY TO THE SYNTHESIZER
+        strl.session_state["pipeline_stage"] = "SYNTHESIZE"
         strl.rerun()
+
+    # STATE STEP 4: ROUTING EVALUATION
+    elif current_stage == "SYNTHESIZE":
+        draw_progress_screen(3, "Synthesizing multi-agent findings into structured memo drafts...")
+        
+        from vc_deal_review.agents.synthesizer_agent import SynthesizerAgent
+        
+        comp_report = strl.session_state["compliance_report"]
+        fin_report = strl.session_state["financial_report"]
+        risk_report = strl.session_state["risk_report"]
+        
+        # Ingest payloads and evaluate escalation rules
+        synthesizer = SynthesizerAgent()
+        synthesis_result = synthesizer.evaluate_and_route(comp_report, fin_report, risk_report)
+        
+        strl.session_state["synthesis_report"] = synthesis_result
+        strl.session_state["edited_memo"] = {
+            "executive_summary": synthesis_result.executive_summary_draft,
+            "remediation_notes": ""
+        }
+    
+    # Dynamically branch destination based on rule evaluation
+    strl.session_state["analysis_triggered"] = True
+    strl.session_state["pipeline_stage"] = strl.session_state["synthesis_report"].routing_destination  
+    strl.rerun()
+
+
 
 # -------------------------------------------------------------
 # MAIN DASHBOARD RENDER FRAME
@@ -539,10 +630,12 @@ elif "active_deal_data" in strl.session_state:
         )
         
     with main_tab2:
-        sub_tab1, sub_tab2, sub_tab3 = strl.tabs([
+        # Expand tabs to include the Synthesizer workspace
+        sub_tab1, sub_tab2, sub_tab3, sub_tab4 = strl.tabs([
             "Compliance Mandates",
             "Financial Performance",
-            "Risk Quantification"
+            "Risk Quantification",
+            "📝 Executive Memo (HITL)"
         ])
         
         with sub_tab1:
@@ -629,6 +722,93 @@ elif "active_deal_data" in strl.session_state:
             else:
                 strl.info("Trigger 'Execute Intelligence Run' above to run the ReAct mathematical risk loop tracker.")
 
+        with sub_tab4:
+                    strl.markdown("<br>", unsafe_allow_html=True)
+                    
+                    if "synthesis_report" in strl.session_state:
+                        synth = strl.session_state["synthesis_report"]
+                        current_stage = strl.session_state.get("pipeline_stage", "COMPLETE")
+                        
+                        # INTERCEPT PATHWAY: ESCALATION CRITERIA BREACHED
+                        if current_stage == "HUMAN_REVIEW":
+                            strl.markdown("### ⚠️ Institutional Escalation Triggered")
+                            
+                            # Clearly expose which automated rules failed
+                            strl.error("#### 🛑 Threshold Violations Required for Review:")
+                            for reason in synth.triggered_reasons:
+                                strl.markdown(f"- **{reason}**")
+                                
+                            strl.markdown("---")
+                            strl.markdown("#### 🛠️ Human-in-the-Loop Override Workspace")
+                            strl.caption("Analyze the deep dives in the previous tabs, then edit the draft text or apply a final action stance below.")
+                            
+                            # Editable workspace populated with Claude's high-density synthesis
+                            user_summary = strl.text_area(
+                                "Executive Summary & Thesis Copy (Editable)",
+                                value=strl.session_state["edited_memo"]["executive_summary"],
+                                height=250
+                            )
+                            
+                            user_remediation = strl.text_area(
+                                "Diligence Mitigations / Audit Trail Closing Notes",
+                                value=strl.session_state["edited_memo"]["remediation_notes"],
+                                placeholder="Detail the out-of-band justifications for overriding this exception, or document the specific structural flaws causing deal rejection...",
+                                height=120
+                            )
+                            
+                            strl.markdown("#### Select Final Decision Authorization Stance:")
+                            col_b1, col_b2 = strl.columns(2)
+                            
+                            # ACTION PATHWAY 1: OVERWRITE & FORCE PROCEED
+                            with col_b1:
+                                if strl.button("💚 Overwrite Escalation & Proceed", type="primary", use_container_width=True):
+                                    strl.session_state["edited_memo"]["executive_summary"] = user_summary
+                                    strl.session_state["edited_memo"]["remediation_notes"] = user_remediation
+                                    strl.session_state["synthesis_report"].suggested_recommendation = "PROCEED (HUMAN OVERRIDE)"
+                                    strl.session_state["pipeline_stage"] = "COMPLETE"
+                                    strl.success("Diligence override committed successfully!")
+                                    strl.rerun()
+                                    
+                            # ACTION PATHWAY 2: AFFIRM RISK AND REJECT/HOLD
+                            with col_b2:
+                                if strl.button("🛑 Affirm Risks & Reject / Hold Deal", type="secondary", use_container_width=True):
+                                    strl.session_state["edited_memo"]["executive_summary"] = user_summary
+                                    strl.session_state["edited_memo"]["remediation_notes"] = user_remediation
+                                    strl.session_state["synthesis_report"].suggested_recommendation = "REJECTED / STRATEGIC_HOLD"
+                                    strl.session_state["pipeline_stage"] = "COMPLETE"
+                                    strl.error("Deal closure committed to historical audit records.")
+                                    strl.rerun()
+
+                        # FINALIZED PATHWAY: AUTO-PASSED OR HUMAN COMPLETED
+                        else:
+                            final_rec = synth.suggested_recommendation
+                            
+                            # Render distinct styling states depending on final action stance
+                            if "PROCEED" in final_rec:
+                                banner_style = "background-color: #ecfdf5; border-left: 5px solid #10b981; color: #065f46;"
+                                title_text = "✅ LOCKED INVESTMENT COMMITTEE MEMORANDUM"
+                            else:
+                                banner_style = "background-color: #fef2f2; border-left: 5px solid #ef4444; color: #991b1b;"
+                                title_text = "🛑 LOCKED AUDIT TRAIL RISK & REJECTION REPORT"
+                                
+                            strl.markdown(
+                                f"""
+                                <div style="{banner_style} padding: 1.5rem; border-radius: 4px; margin-bottom: 1.5rem;">
+                                    <h3 style="margin-top:0; color: inherit; font-size:18px;">{title_text}</h3>
+                                    <b>Authorized Deal Stance:</b> {final_rec}<br>
+                                    <b>Pipeline Lifecycle:</b> Verified & Archived
+                                </div>
+                                """, unsafe_allow_html=True
+                            )
+                            
+                            strl.markdown("#### 📖 Executive Summary & Thesis Narrative")
+                            strl.write(strl.session_state["edited_memo"]["executive_summary"])
+                            
+                            if strl.session_state["edited_memo"]["remediation_notes"]:
+                                strl.markdown("#### 📝 Reviewer Diligence Remediation Notes")
+                                strl.info(strl.session_state["edited_memo"]["remediation_notes"])
+                    else:
+                        strl.info("Execute Intelligence Run above to initialize the baseline Synthesis workspace.")    
     strl.markdown("<br>", unsafe_allow_html=True)
     with strl.expander("🔍 View Raw Validated Schema JSON"):
         strl.json(deal_dict)
