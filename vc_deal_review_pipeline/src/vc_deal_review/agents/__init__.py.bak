@@ -2,8 +2,7 @@ from vc_deal_review.agents.base_agent import BaseAgent
 from vc_deal_review.agents.extractor_agent import ExtractorAgent
 from vc_deal_review.agents.compliance_agent import ComplianceAgent
 from vc_deal_review.agents.financial_agent import FinancialAgent
-from vc_deal_review.agents.risk_agent import RiskAgent
 
 
 
-__all__ = ["BaseAgent", "ExtractorAgent", "ComplianceAgent", "FinancialAgent", "RiskAgent"]
+__all__ = ["BaseAgent", "ExtractorAgent", "ComplianceAgent", "FinancialAgent"]

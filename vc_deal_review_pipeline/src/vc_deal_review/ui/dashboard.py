@@ -1,6 +1,25 @@
+# src/vc_deal_review/ui/dashboard.py
 import os
 import sys
 from pathlib import Path
+
+# Silence the Windows-specific Proactor asyncio connection teardown noise
+if sys.platform == "win32":
+    from functools import wraps
+    from asyncio.proactor_events import _ProactorBasePipeTransport
+
+    def silence_connection_lost_noise(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            try:
+                return func(*args, **kwargs)
+            except (ConnectionResetError, ConnectionAbortedError):
+                pass  # Safely ignore harmless socket drops during client reloads
+        return wrapper
+
+    _ProactorBasePipeTransport._call_connection_lost = silence_connection_lost_noise(
+        _ProactorBasePipeTransport._call_connection_lost
+    )
 
 # Force Python to recognize the 'src' root directory relative to this file
 src_path = str(Path(__file__).resolve().parents[2])
@@ -12,8 +31,9 @@ import json
 import io
 from pypdf import PdfReader
 from vc_deal_review.agents.extractor_agent import ExtractorAgent
-from vc_deal_review.Compliance.engine import ComplianceEngine 
-from vc_deal_review.Financial.engine import FinancialEngine
+from vc_deal_review.agents.compliance_agent import ComplianceAgent
+from vc_deal_review.agents.financial_agent import FinancialAgent
+from vc_deal_review.agents.risk_agent import RiskAgent  # <-- Included natively
 
 strl.set_page_config(
     page_title="Venture Capital Deal Review Intelligence Pipeline",
@@ -24,6 +44,9 @@ strl.set_page_config(
 # Setup a local cache directory
 CACHE_DIR = Path("src/vc_deal_review/.cache")
 CACHE_DIR.mkdir(parents=True, exist_ok=True)
+
+# Get a unique token for the current browser session
+current_user = strl.context.headers.get("X-Forwarded-User", "local_developer")
 
 # -------------------------------------------------------------
 # GLOBAL STYLING FRAMEWORK & SPACE OPTIMIZATION
@@ -49,10 +72,7 @@ strl.markdown(
             margin-bottom: -0.5rem !important;
         }
         
-        /* =========================================================
-           TOP LEVEL MAIN WORKSPACE TABS (Pills Container Style)
-           ========================================================= */
-        /* Target the outer tab navigation wrapper bar */
+        /* TOP LEVEL MAIN WORKSPACE TABS */
         div[data-testid="stMainBlockContainer"] > div > div > div[data-testid="stTabs"] > div:first-child {
             background-color: #f8fafc !important; 
             border: 1px solid #e2e8f0 !important;
@@ -62,13 +82,6 @@ strl.markdown(
             width: 100% !important;
         }
         
-        /* FORCE EXPLICIT REMOVAL of native underline inside the pill container */
-        div[data-testid="stMainBlockContainer"] > div > div > div[data-testid="stTabs"] > div:first-child div[data-baseweb="tab-list"] {
-            border-bottom: none !important;
-            border-bottom-width: 0px !important;
-        }
-        
-        /* Style buttons inside the outer main tab bar container ONLY */
         div[data-testid="stMainBlockContainer"] > div > div > div[data-testid="stTabs"] > div:first-child button {
             background-color: transparent !important;
             color: #64748b !important; 
@@ -77,82 +90,42 @@ strl.markdown(
             padding: 0.5rem 1.5rem !important;
             font-size: 14px !important;
             font-weight: 600 !important;
-            margin-right: 4px !important;
             transition: all 0.2s ease-in-out !important;
         }
         
         div[data-testid="stMainBlockContainer"] > div > div > div[data-testid="stTabs"] > div:first-child button[aria-selected="true"] {
             background-color: #eff6ff !important; 
             color: #1e40af !important; 
-            border: none !important;
         }
         
-        /* Kill moving line highlight under the outer pills layer */
         div[data-testid="stMainBlockContainer"] > div > div > div[data-testid="stTabs"] > div:first-child div[data-baseweb="tab-highlight"] {
             display: none !important;
         }
         
-        /* =========================================================
-           NESTED SUB-TABS (Clean Horizontal Underline Style)
-           ========================================================= */
-        /* Target ONLY the inner sub-tab navigation wrapper container */
+        /* NESTED SUB-TABS */
         div[data-testid="stTabs"] div[data-testid="stTabs"] > div:first-child {
             background-color: transparent !important;
             border: none !important;
-            border-radius: 0px !important;
-            padding: 0px !important;
             margin-top: -0.5rem !important;
             margin-bottom: 0.75rem !important;
-            width: 100% !important;
         }
         
-        /* Confine the thin horizontal baseline line strictly to the inner sub-tab list layer */
         div[data-testid="stTabs"] div[data-testid="stTabs"] > div:first-child div[data-baseweb="tab-list"] {
             border-bottom: 1px solid #e2e8f0 !important;
             gap: 24px !important;
         }
         
-        /* Text items style for inner sub-tabs navigation items */
-        div[data-testid="stTabs"] div[data-testid="stTabs"] > div:first-child button {
-            background-color: transparent !important;
-            color: #64748b !important;
-            border: none !important;
-            border-radius: 0px !important;
-            padding: 0.4rem 1rem !important;
-            font-size: 13px !important;
-            font-weight: 500 !important;
-            margin-right: 8px !important;
-        }
-        
         div[data-testid="stTabs"] div[data-testid="stTabs"] > div:first-child button[aria-selected="true"] {
-            background-color: transparent !important;
             color: #1e40af !important;
-            border: none !important;
         }
 
-        /* Thins down and handles the active tab moving indicator strip for nested tabs */
         div[data-testid="stTabs"] div[data-testid="stTabs"] div[data-baseweb="tab-highlight"] {
             display: block !important;
             height: 2px !important; 
             background-color: #2563eb !important;
         }
-        
-        /* Pad alignment corrections */
-        div[data-baseweb="tab"] {
-            padding-bottom: 6px !important;
-            padding-top: 6px !important;
-        }
 
-        /* Global catch-all override to strip unintentional browser fallback styling accents */
-        .stTabs button, .stTabs button[aria-selected="true"] {
-            border-bottom: none !important;
-            border-bottom-width: 0px !important;
-            box-shadow: none !important;
-        }
-
-        /* =========================================================
-           PREMIUM STATUS TRACKER STYLING
-           ========================================================= */
+        /* PREMIUM STATUS TRACKER STYLING */
         .status-tracker {
             display: flex;
             justify-content: space-between;
@@ -207,19 +180,16 @@ strl.markdown(
             background-color: #10b981;
         }
 
-        /* Report Tab Findings Typography & Padding Optimization */
         .report-finding-header {
             font-size: 14px !important;
             font-weight: 600 !important;
             color: #0f172a !important;
             margin-bottom: 4px !important;
-            line-height: 1.3 !important;
         }
         .report-finding-details {
             font-size: 13.5px !important;
             color: #334155 !important;
             line-height: 1.5 !important;
-            margin-bottom: 4px !important;
         }
         .report-finding-meta {
             font-size: 12px !important;
@@ -233,7 +203,6 @@ strl.markdown(
     unsafe_allow_html=True
 )
 
-# FIXED EXPLICIT LINE-HEIGHT TO PREVENT TYPOGRAPHY CUTOFF
 strl.markdown(
     """
     <div style="margin-bottom: 1.25rem; margin-top: -0.5rem;">
@@ -265,7 +234,7 @@ with strl.sidebar:
 # PIPELINE EXECUTION & DATA CACHING
 # -------------------------------------------------------------
 if trigger_analysis:
-    for key in ["compliance_report", "financial_report", "active_deal_data", "analysis_triggered"]:
+    for key in ["compliance_report", "financial_report", "risk_report", "active_deal_data", "analysis_triggered", "pipeline_stage"]:
         if key in strl.session_state:
             del strl.session_state[key]
 
@@ -309,9 +278,130 @@ if trigger_analysis:
         strl.session_state["active_deal_data"] = deal_dict
 
 # -------------------------------------------------------------
+# BACKGROUND MULTI-AGENT STATE MACHINE EXECUTION LOOP
+# -------------------------------------------------------------
+# This intercepts the execution request top-level before horizontal grid layouts render
+if "pipeline_stage" in strl.session_state and strl.session_state["pipeline_stage"] != "COMPLETE":
+    current_stage = strl.session_state["pipeline_stage"]
+    deal_dict = strl.session_state["active_deal_data"]
+    fin_cache_file = CACHE_DIR / "nexushealth_ai_cached_financials.json"
+    risk_cache_file = CACHE_DIR / "nexushealth_ai_cached_risk.json"
+
+    # Define visual render helper function for the full takeover screen
+    def draw_progress_screen(active_step: int, step_desc: str):
+        s1_num, s1_bg, s1_txt, s1_pulse = ("✓", "#059669", "color: #059669; font-weight: 600;", "") if active_step > 1 else ("1", "#2563eb", "color: #1e3a8a; font-weight: 600;", "pulse-node")
+        s2_num, s2_bg, s2_txt, s2_pulse = ("✓", "#059669", "color: #059669; font-weight: 600;", "") if active_step > 2 else (("2", "#2563eb", "color: #2563eb; font-weight: 600;", "pulse-node") if active_step == 2 else ("2", "#f1f5f9", "color: #64748b;", ""))
+        s3_num, s3_bg, s3_txt, s3_pulse = ("3", "#2563eb", "color: #2563eb; font-weight: 600;", "pulse-node") if active_step == 3 else ("3", "#f1f5f9", "color: #64748b;", "")
+        
+        strl.html(
+            f"""
+            <div style="background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 4.5rem 2rem; text-align: center; margin: 2rem auto; max-width: 900px; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05); font-family: 'Inter', sans-serif;">
+                <div class="luxury-spinner"></div>
+                <div style="font-size: 24px; font-weight: 700; color: #0f172a; margin-bottom: 0.75rem; letter-spacing: -0.01em;">Orchestrating Multi-Agent Intelligence Tracks</div>
+                <div style="font-size: 14.5px; color: #475569; max-width: 540px; margin: 0 auto 2.5rem auto; line-height: 1.6;">
+                    Currently executing backend verification pipelines: <span style="color:#2563eb; font-weight:600;">{step_desc}</span>
+                </div>
+                
+                <div style="display: flex; justify-content: space-between; max-width: 650px; margin: 0 auto; position: relative;">
+                    <div style="position: absolute; top: 15px; left: 10%; right: 10%; height: 2px; background: #e2e8f0; z-index: 1;"></div>
+                    <div style="z-index: 2; text-align: center; width: 30%;">
+                        <div class="{s1_pulse}" style="width: 32px; height: 32px; border-radius: 50%; background: {s1_bg}; color: white; display: flex; align-items: center; justify-content: center; margin: 0 auto 8px auto; font-size: 12px; font-weight: 700;">{s1_num}</div>
+                        <div style="font-size: 12px; {s1_txt}">Compliance Engine</div>
+                    </div>
+                    <div style="z-index: 2; text-align: center; width: 30%;">
+                        <div class="{s2_pulse}" style="width: 32px; height: 32px; border-radius: 50%; background: {s2_bg}; color: {'white' if active_step >= 2 else '#94a3b8'}; display: flex; align-items: center; justify-content: center; margin: 0 auto 8px auto; font-size: 12px; font-weight: 700; {'border: 2px solid #e2e8f0;' if active_step < 2 else ''}">{s2_num}</div>
+                        <div style="font-size: 12px; {s2_txt}">Financial Profile</div>
+                    </div>
+                    <div style="z-index: 2; text-align: center; width: 30%;">
+                        <div class="{s3_pulse}" style="width: 32px; height: 32px; border-radius: 50%; background: {s3_bg}; color: {'white' if active_step == 3 else '#94a3b8'}; display: flex; align-items: center; justify-content: center; margin: 0 auto 8px auto; font-size: 12px; font-weight: 700; {'border: 2px solid #e2e8f0;' if active_step < 3 else ''}">{s3_num}</div>
+                        <div style="font-size: 12px; {s3_txt}">Risk Quantification</div>
+                    </div>
+                </div>
+            </div>
+            <style>
+                .luxury-spinner {{
+                    width: 50px;
+                    height: 50px;
+                    border: 3.5px solid #f1f5f9;
+                    border-top: 3.5px solid #2563eb;
+                    border-radius: 50%;
+                    margin: 0 auto 1.5rem auto;
+                    animation: spin 1s cubic-bezier(0.55, 0.055, 0.675, 0.19) infinite;
+                }}
+                @keyframes spin {{ 0% {{ transform: rotate(0deg); }} 100% {{ transform: rotate(360deg); }} }}
+                @keyframes pulse-ring {{
+                    0% {{ box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.4); }}
+                    70% {{ box-shadow: 0 0 0 10px rgba(37, 99, 235, 0); }}
+                    100% {{ box-shadow: 0 0 0 0 rgba(37, 99, 235, 0); }}
+                }}
+                .pulse-node {{ animation: pulse-ring 1.5s infinite; }}
+            </style>
+            """
+        )
+
+    # STATE STEP 1: COMPLIANCE
+    if current_stage == "COMPLIANCE":
+        draw_progress_screen(1, "Evaluating corporate parameters against investment mandate parameters...")
+        compliance = ComplianceAgent()
+        strl.session_state["compliance_report"] = compliance.assess_deal_compliance(deal_dict)
+        strl.session_state["pipeline_stage"] = "FINANCIAL"
+        strl.rerun()
+
+    # STATE STEP 2: FINANCIALS
+    elif current_stage == "FINANCIAL":
+        draw_progress_screen(2, "Auditing dynamic forecasting assumptions and revenue metrics...")
+        if use_cache and fin_cache_file.exists():
+            with open(fin_cache_file, "r") as f:
+                cached_fin_data = json.load(f)
+            try:
+                from vc_deal_review.schema.financials import FinancialAnalysisReport
+                strl.session_state["financial_report"] = FinancialAnalysisReport.model_validate(cached_fin_data)
+            except Exception:
+                fin_agent = FinancialAgent()
+                fin_report = fin_agent.analyze_financial_performance(deal_dict)
+                strl.session_state["financial_report"] = fin_report
+                with open(fin_cache_file, "w") as f:
+                    json.dump(fin_report.model_dump(), f, indent=4)
+        else:
+            fin_agent = FinancialAgent()
+            fin_report = fin_agent.analyze_financial_performance(deal_dict)
+            strl.session_state["financial_report"] = fin_report
+            with open(fin_cache_file, "w") as f:
+                json.dump(fin_report.model_dump(), f, indent=4)
+        
+        strl.session_state["pipeline_stage"] = "RISK"
+        strl.rerun()
+
+    # STATE STEP 3: RISK REACT LOOP
+    elif current_stage == "RISK":
+        draw_progress_screen(3, "Executing mathematical LangGraph ReAct decision trees...")
+        if use_cache and risk_cache_file.exists():
+            with open(risk_cache_file, "r") as f:
+                cached_risk_data = json.load(f)
+            try:
+                from vc_deal_review.schema.risk import RiskQuantifierReport
+                strl.session_state["risk_report"] = RiskQuantifierReport.model_validate(cached_risk_data)
+            except Exception:
+                risk_agent = RiskAgent()
+                risk_report = risk_agent.assess_deal_risk(deal_dict, user_id=current_user)
+                strl.session_state["risk_report"] = risk_report
+                with open(risk_cache_file, "w") as f:
+                    json.dump(risk_report.model_dump(), f, indent=4)
+        else:
+            risk_agent = RiskAgent()
+            risk_report = risk_agent.assess_deal_risk(deal_dict, user_id=current_user)
+            strl.session_state["risk_report"] = risk_report
+            with open(risk_cache_file, "w") as f:
+                json.dump(risk_report.model_dump(), f, indent=4)
+
+        strl.session_state["analysis_triggered"] = True
+        strl.session_state["pipeline_stage"] = "COMPLETE"
+        strl.rerun()
+
+# -------------------------------------------------------------
 # MAIN DASHBOARD RENDER FRAME
 # -------------------------------------------------------------
-if "active_deal_data" in strl.session_state:
+elif "active_deal_data" in strl.session_state:
     deal_dict = strl.session_state["active_deal_data"]
     
     company_name = deal_dict.get("metadata", {}).get("company_name", "Unknown Company")
@@ -320,7 +410,6 @@ if "active_deal_data" in strl.session_state:
     inc_type = deal_dict.get("metadata", {}).get("incorporation_type", "N/A")
     fin_dict = deal_dict.get("financials", {})
 
-    fin_cache_file = CACHE_DIR / "nexushealth_ai_cached_financials.json"
     has_run = strl.session_state.get("analysis_triggered", False)
     is_cached_extraction = strl.session_state.get("extraction_cached_flag", False)
 
@@ -377,59 +466,16 @@ if "active_deal_data" in strl.session_state:
             with strl.container():
                 strl.markdown(
                     """
-                    <div style="background-color: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 0.5rem 1rem; margin-bottom: 6px;">
+                    <div style="background-color: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 0.5rem 1rem; margin-bottom: 6px; text-align: center;">
                         <span style="font-size: 12.5px; font-weight: 700; color: #166534;">⚡ Deep Analysis Sweep Available</span>
                     </div>
                     """,
                     unsafe_allow_html=True
                 )
+                # Clicking this button initializes our non-blocking state processing track
                 if strl.button("Execute Intelligence Run", type="primary", use_container_width=True):
-                    with strl.container():
-                        strl.markdown(
-                            """
-                            <div style="background-color: #f8fafc; border: 2px dashed #3b82f6; border-radius: 12px; padding: 3rem; text-align: center; margin: 2rem 0; width: 100%;">
-                                <div style="font-size: 40px; margin-bottom: 1rem; animation: pulse 1.5s infinite;">⚙️</div>
-                                <div style="font-size: 20px; font-weight: 700; color: #1e3a8a; margin-bottom: 0.5rem;">Executing Multi-Agent Evaluation Tracks</div>
-                                <div style="font-size: 14px; color: #64748b; max-width: 500px; margin: 0 auto; line-height: 1.5;">
-                                    Parsing structural deal packages, verifying compliance metrics, and auditing financial models via Claude Sonnet...
-                                </div>
-                            </div>
-                            <style>
-                                @keyframes pulse {
-                                    0% { transform: scale(1); opacity: 0.6; }
-                                    50% { transform: scale(1.2); opacity: 1; }
-                                    100% { transform: scale(1); opacity: 0.6; }
-                                }
-                            </style>
-                            """, 
-                            unsafe_allow_html=True
-                        )
-                        
-                        with strl.spinner("Processing framework matrices..."):
-                            comp_engine = ComplianceEngine()
-                            strl.session_state["compliance_report"] = comp_engine.evaluate_deal(deal_dict)
-                            
-                            if use_cache and fin_cache_file.exists():
-                                with open(fin_cache_file, "r") as f:
-                                    cached_fin_data = json.load(f)
-                                try:
-                                    from vc_deal_review.Financial.models import FinancialAnalysisReport
-                                    strl.session_state["financial_report"] = FinancialAnalysisReport.model_validate(cached_fin_data)
-                                except Exception:
-                                    fin_engine = FinancialEngine()
-                                    fin_report = fin_engine.analyze_financial_performance(deal_dict)
-                                    strl.session_state["financial_report"] = fin_report
-                                    with open(fin_cache_file, "w") as f:
-                                        json.dump(fin_report.model_dump(), f, indent=4)
-                            else:
-                                fin_engine = FinancialEngine()
-                                fin_report = fin_engine.analyze_financial_performance(deal_dict)
-                                strl.session_state["financial_report"] = fin_report
-                                with open(fin_cache_file, "w") as f:
-                                    json.dump(fin_report.model_dump(), f, indent=4)
-
-                            strl.session_state["analysis_triggered"] = True
-                            strl.rerun()
+                    strl.session_state["pipeline_stage"] = "COMPLIANCE"
+                    strl.rerun()
         else:
             with strl.container():
                 strl.markdown(
@@ -444,10 +490,9 @@ if "active_deal_data" in strl.session_state:
 
     strl.markdown("<div style='margin-top: 0.5rem;'></div>", unsafe_allow_html=True)
 
-# -------------------------------------------------------------
-    # EXPANDED DATA DISPLAY RENDERING CARDS (FIXED EQUAL HEIGHT FLEX COLS)
     # -------------------------------------------------------------
-    # Dropped 'min-height' and added 'height: 100%' to ensure equal flex mapping
+    # EXPANDED DATA DISPLAY RENDERING CARDS
+    # -------------------------------------------------------------
     card_style = "background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 1.5rem; color: #334155; height: 100%; box-sizing: border-box;"
     item_style = "display: flex; justify-content: space-between; margin-bottom: 0.75rem; font-size: 14px; gap: 12px;"
     card_header_style = "margin-top: 0px; margin-bottom: 1.25rem; font-size: 17px; font-weight: 600; color: #1e293b;"
@@ -483,8 +528,6 @@ if "active_deal_data" in strl.session_state:
 
     with main_tab1:
         strl.markdown("<br>", unsafe_allow_html=True)
-        
-        # Injecting a flex wrapper enclosing the row to guarantee matching card sizing
         strl.markdown(
             f"""
             <div style="display: flex; flex-direction: row; gap: 1.5rem; width: 100%; align-items: stretch;">
@@ -551,7 +594,40 @@ if "active_deal_data" in strl.session_state:
 
         with sub_tab3:
             strl.markdown("<br>", unsafe_allow_html=True)
-            strl.info("Trigger 'Run Deal Analysis Sweep' above to activate Risk Engine grading.")
+            if "risk_report" in strl.session_state:
+                risk_report = strl.session_state["risk_report"]
+                color_hex = {"APPROVED": "#22c55e", "REVIEW_REQUIRED": "#f97316", "BLOCKED": "#ef4444"}
+                stance_color = color_hex.get(risk_report.overall_status, "#64748b")
+                
+                strl.markdown(
+                    f"""
+                    <div style="display: flex; gap: 1rem; margin-bottom: 1.5rem;">
+                        <div style="flex: 1; background-color: {stance_color}10; border-left: 4px solid {stance_color}; padding: 12px; border-radius: 4px; font-size: 14px;">
+                            <b>Risk Exposure Tier:</b> {risk_report.overall_status}
+                        </div>
+                        <div style="flex: 1; background-color: #f1f5f9; border-left: 4px solid #475569; padding: 12px; border-radius: 4px; font-size: 14px;">
+                            <b>Verified Operational Runway:</b> {risk_report.calculated_runway_months:.1f} Months
+                        </div>
+                        <div style="flex: 1; background-color: #fef2f2; border-left: 4px solid #ef4444; padding: 12px; border-radius: 4px; font-size: 14px;">
+                            <b>Max Flagged Severity:</b> {risk_report.highest_severity_score} / 10
+                        </div>
+                    </div>
+                    """, 
+                    unsafe_allow_html=True
+                )
+                
+                for finding in risk_report.findings:
+                    f_icon = "✅" if finding.status == "PASS" else ("⚠️" if finding.status == "WARNING" else "🛑")
+                    col_f1, col_f2 = strl.columns([0.25, 0.75])
+                    
+                    col_f1.markdown(f"<div class='report-finding-header'>{f_icon} {finding.rule_name}</div>", unsafe_allow_html=True)
+                    col_f2.markdown(
+                        f"<div class='report-finding-details'>{finding.details}</div>"
+                        f"<div class='report-finding-meta'>Calculated Metric: {finding.extracted_value} | Threshold Constraint: {finding.threshold_applied}</div>", 
+                        unsafe_allow_html=True
+                    )
+            else:
+                strl.info("Trigger 'Execute Intelligence Run' above to run the ReAct mathematical risk loop tracker.")
 
     strl.markdown("<br>", unsafe_allow_html=True)
     with strl.expander("🔍 View Raw Validated Schema JSON"):

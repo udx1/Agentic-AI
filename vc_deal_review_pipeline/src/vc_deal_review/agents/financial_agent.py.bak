@@ -1,9 +1,9 @@
 import json
 from vc_deal_review.agents.base_agent import BaseAgent
-from vc_deal_review.Financial.models import FinancialAnalysisReport
-from vc_deal_review.Compliance.models import RuleResult
+from vc_deal_review.schema.financials import FinancialAnalysisReport
+from vc_deal_review.schema.report import ReportResult
 
-class FinancialEngine(BaseAgent):
+class FinancialAgent(BaseAgent):
     def __init__(self):
         super().__init__(temperature=0.0)
         self.structured_llm = self.llm.with_structured_output(FinancialAnalysisReport)

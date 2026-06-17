@@ -1,16 +1,116 @@
+# src/vc_deal_review/agents/risk_agent.py
+import json
+from typing import Annotated, Sequence
+from typing_extensions import TypedDict
+
+from langchain_core.messages import BaseMessage, HumanMessage, SystemMessage
+from langgraph.graph import StateGraph, START, END
+from langgraph.graph.message import add_messages
+from langgraph.prebuilt import ToolNode
+# 1. Import MemorySaver for state checkpointing/caching
+from langgraph.checkpoint.memory import MemorySaver 
+
 from vc_deal_review.agents.base_agent import BaseAgent
-from vc_deal_review.compliance import ComplianceEngine
+from vc_deal_review.schema.risk import RiskQuantifierReport
+from vc_deal_review.utils.math_tools import calculate_runway_months, calculate_arr_multiple
+
+class AgentState(TypedDict):
+    messages: Annotated[Sequence[BaseMessage], add_messages]
 
 class RiskAgent(BaseAgent):
     def __init__(self):
-        # Ensure BaseAgent is initialized if it requires arguments
-        super().__init__()
-        self.engine = ComplianceEngine()
+        super().__init__(temperature=0.0)
         
-    def assess_deal_risk(self, deal_data: dict):
-        try:
-            return self.engine.evaluate_deal(deal_data)
-        except Exception as e:
-            # This print will show in your terminal, preventing the silent crash
-            print(f"DEBUG: Compliance Engine Error: {e}")
-            raise e
+        self.tools = [calculate_runway_months, calculate_arr_multiple]
+        self.tool_node = ToolNode(self.tools)
+        self.tool_bound_llm = self.llm.bind_tools(self.tools)
+        self.structured_llm = self.llm.with_structured_output(RiskQuantifierReport)
+        
+        workflow = StateGraph(AgentState)
+        workflow.add_node("reason", self.reason_node)
+        workflow.add_node("action", self.tool_node)
+        
+        workflow.add_edge(START, "reason")
+        workflow.add_conditional_edges(
+            "reason",
+            self.should_continue,
+            {"continue": "action", "end": END}
+        )
+        workflow.add_edge("action", "reason")
+        
+        # 2. Instantiate the in-memory checkpointer
+        self.memory = MemorySaver()
+        
+        # 3. Compile the graph WITH the checkpointer attached
+        self.graph = workflow.compile(checkpointer=self.memory)
+
+    def reason_node(self, state: AgentState) -> dict:
+        response = self.tool_bound_llm.invoke(state["messages"])
+        return {"messages": [response]}
+
+    def should_continue(self, state: AgentState) -> str:
+        last_message = state["messages"][-1]
+        if hasattr(last_message, "tool_calls") and last_message.tool_calls:
+            return "continue"
+        return "end"
+
+
+    # --- External Execution Point ---
+    def assess_deal_risk(self, deal_data: dict, user_id: str) -> RiskQuantifierReport:
+        """Main method called by dashboard.py to run the ReAct loop under a unique user thread session."""
+        
+        company_name = deal_data.get("metadata", {}).get("company_name", "Unknown Entity")
+        
+        # Clean the strings to make a bulletproof, unique composite cache key
+        safe_company = company_name.lower().replace(" ", "_")
+        safe_user = user_id.lower().replace(" ", "_")
+        
+        # COMPOSITE THREAD ID: Keeps User A and User B completely sandboxed
+        thread_id = f"user_{safe_user}_deal_{safe_company}"
+        
+        # Define the execution configuration thread
+        config = {"configurable": {"thread_id": thread_id}}
+        
+        # Look up if this exact user + deal combo already ran
+        existing_state = self.graph.get_state(config)
+        
+        if existing_state and existing_state.values.get("messages"):
+            # Cache Hit for this specific user/deal combo!
+            final_messages = existing_state.values["messages"]
+        else:
+            # Cache Miss: Run the ReAct loop safely sandboxed from other users
+            system_instructions = (
+                "You are an elite institutional Venture Capital Risk Officer..."
+            )
+            
+            user_prompt = f"Extracted Deal Profile Data Package:\n\n{json.dumps(deal_data, indent=2)}"
+            
+            initial_messages = [
+                SystemMessage(content=system_instructions),
+                HumanMessage(content=user_prompt)
+            ]
+            
+            final_state = self.graph.invoke({"messages": initial_messages}, config=config)
+            final_messages = final_state["messages"]
+
+        # --- Structured Handoff ---
+        history_summary = []
+        for msg in final_messages:
+            if msg.type in ["ai", "tool"]:
+                history_summary.append(f"[{msg.type.upper()}]: {msg.content}")
+
+        synthesis_prompt = (
+            f"Review the full audit history and tool outcomes below, and structure the final report "
+            f"exactly according to the required RiskQuantifierReport schema.\n\n"
+            f"Execution History:\n" + "\n".join(history_summary)
+        )
+        
+        final_input = [
+            SystemMessage(content="Format the audited matrix cleanly into structural schemas."),
+            HumanMessage(content=synthesis_prompt)
+        ]
+        
+        report = self.structured_llm.invoke(final_input)
+        report.company_name = company_name
+        
+        return report
