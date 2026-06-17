@@ -31,14 +31,6 @@ import json
 import io
 from pypdf import PdfReader
 from vc_deal_review.agents.extractor_agent import ExtractorAgent
-from vc_deal_review.agents.compliance_agent import ComplianceAgent
-from vc_deal_review.schema.compliance import ComplianceReport
-
-from vc_deal_review.agents.financial_agent import FinancialAgent
-from vc_deal_review.schema.financials import FinancialAnalysisReport
-from vc_deal_review.agents.risk_agent import RiskAgent  # <-- Included natively
-from vc_deal_review.schema.risk import RiskQuantifierReport
-
 
 strl.set_page_config(
     page_title="Venture Capital Deal Review Intelligence Pipeline",
@@ -52,6 +44,9 @@ CACHE_DIR.mkdir(parents=True, exist_ok=True)
 
 # Get a unique token for the current browser session
 current_user = strl.context.headers.get("X-Forwarded-User", "local_developer")
+
+if "active_sub_tab" not in strl.session_state:
+    strl.session_state["active_sub_tab"] = 0
 
 # -------------------------------------------------------------
 # GLOBAL STYLING FRAMEWORK & SPACE OPTIMIZATION
@@ -302,56 +297,53 @@ if trigger_analysis:
 # BACKGROUND MULTI-AGENT STATE MACHINE EXECUTION LOOP
 # -------------------------------------------------------------
 # This intercepts the execution request top-level before horizontal grid layouts render
-if "pipeline_stage" in strl.session_state and strl.session_state["pipeline_stage"] != "COMPLETE":
+if "pipeline_stage" in strl.session_state \
+    and strl.session_state["pipeline_stage"] in ["PARALLEL_EXECUTION", "SYNTHESIZE"]:
     current_stage = strl.session_state["pipeline_stage"]
     deal_dict = strl.session_state["active_deal_data"]
 
 
     # Define visual render helper function for the full takeover screen
     def draw_progress_screen(active_step: int, step_desc: str):
-        s1_num, s1_bg, s1_txt, s1_pulse = ("✓", "#059669", "color: #059669; font-weight: 600;", "") if active_step > 1 else ("1", "#2563eb", "color: #1e3a8a; font-weight: 600;", "pulse-node")
+        # State styling definitions for a unified 4-stage tracking layout
+        s1_num, s1_bg, s1_txt, s1_pulse = ("✓", "#059669", "color: #059669; font-weight: 600;", "") if active_step > 1 else ("1", "#2563eb", "color: #2563eb; font-weight: 600;", "pulse-node")
         s2_num, s2_bg, s2_txt, s2_pulse = ("✓", "#059669", "color: #059669; font-weight: 600;", "") if active_step > 2 else (("2", "#2563eb", "color: #2563eb; font-weight: 600;", "pulse-node") if active_step == 2 else ("2", "#f1f5f9", "color: #64748b;", ""))
-        s3_num, s3_bg, s3_txt, s3_pulse = ("3", "#2563eb", "color: #2563eb; font-weight: 600;", "pulse-node") if active_step == 3 else ("3", "#f1f5f9", "color: #64748b;", "")
-        
+        s3_num, s3_bg, s3_txt, s3_pulse = ("✓", "#059669", "color: #059669; font-weight: 600;", "") if active_step > 3 else (("3", "#2563eb", "color: #2563eb; font-weight: 600;", "pulse-node") if active_step == 3 else ("3", "#f1f5f9", "color: #64748b;", ""))
+        s4_num, s4_bg, s4_txt, s4_pulse = ("4", "#2563eb", "color: #2563eb; font-weight: 600;", "pulse-node") if active_step == 4 else ("4", "#f1f5f9", "color: #64748b;", "")
+
         strl.html(
             f"""
-            <div style="background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 4.5rem 2rem; text-align: center; margin: 2rem auto; max-width: 900px; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05); font-family: 'Inter', sans-serif;">
-                <div class="luxury-spinner"></div>
-                <div style="font-size: 24px; font-weight: 700; color: #0f172a; margin-bottom: 0.75rem; letter-spacing: -0.01em;">Orchestrating Multi-Agent Intelligence Tracks</div>
-                <div style="font-size: 14.5px; color: #475569; max-width: 540px; margin: 0 auto 2.5rem auto; line-height: 1.6;">
-                    Currently executing backend verification pipelines: <span style="color:#2563eb; font-weight:600;">{step_desc}</span>
+            <div style="background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 2.5rem 2rem; text-align: center; margin: 1.5rem auto; max-width: 950px; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05); font-family: 'Inter', sans-serif;">
+                <div style="font-size: 20px; font-weight: 700; color: #0f172a; margin-bottom: 0.5rem; letter-spacing: -0.01em;">Orchestrating Multi-Agent Intelligence Tracks</div>
+                <div style="font-size: 13.5px; color: #475569; max-width: 600px; margin: 0 auto 2rem auto; line-height: 1.5;">
+                    Current Status: <span style="color:#2563eb; font-weight:600;">{step_desc}</span>
                 </div>
                 
-                <div style="display: flex; justify-content: space-between; max-width: 650px; margin: 0 auto; position: relative;">
-                    <div style="position: absolute; top: 15px; left: 10%; right: 10%; height: 2px; background: #e2e8f0; z-index: 1;"></div>
-                    <div style="z-index: 2; text-align: center; width: 30%;">
+                <div style="display: flex; justify-content: space-between; max-width: 850px; margin: 0 auto; position: relative;">
+                    <div style="position: absolute; top: 15px; left: 5%; right: 5%; height: 2px; background: #e2e8f0; z-index: 1;"></div>
+                    
+                    <div style="z-index: 2; text-align: center; width: 22%;">
                         <div class="{s1_pulse}" style="width: 32px; height: 32px; border-radius: 50%; background: {s1_bg}; color: white; display: flex; align-items: center; justify-content: center; margin: 0 auto 8px auto; font-size: 12px; font-weight: 700;">{s1_num}</div>
-                        <div style="font-size: 12px; {s1_txt}">Compliance Engine</div>
+                        <div style="font-size: 11.5px; {s1_txt}">Compliance Review</div>
                     </div>
-                    <div style="z-index: 2; text-align: center; width: 30%;">
+                    <div style="z-index: 2; text-align: center; width: 22%;">
                         <div class="{s2_pulse}" style="width: 32px; height: 32px; border-radius: 50%; background: {s2_bg}; color: {'white' if active_step >= 2 else '#94a3b8'}; display: flex; align-items: center; justify-content: center; margin: 0 auto 8px auto; font-size: 12px; font-weight: 700; {'border: 2px solid #e2e8f0;' if active_step < 2 else ''}">{s2_num}</div>
-                        <div style="font-size: 12px; {s2_txt}">Financial Profile</div>
+                        <div style="font-size: 11.5px; {s2_txt}">Financial Audit</div>
                     </div>
-                    <div style="z-index: 2; text-align: center; width: 30%;">
-                        <div class="{s3_pulse}" style="width: 32px; height: 32px; border-radius: 50%; background: {s3_bg}; color: {'white' if active_step == 3 else '#94a3b8'}; display: flex; align-items: center; justify-content: center; margin: 0 auto 8px auto; font-size: 12px; font-weight: 700; {'border: 2px solid #e2e8f0;' if active_step < 3 else ''}">{s3_num}</div>
-                        <div style="font-size: 12px; {s3_txt}">Risk Quantification</div>
+                    <div style="z-index: 2; text-align: center; width: 22%;">
+                        <div class="{s3_pulse}" style="width: 32px; height: 32px; border-radius: 50%; background: {s3_bg}; color: {'white' if active_step >= 3 else '#94a3b8'}; display: flex; align-items: center; justify-content: center; margin: 0 auto 8px auto; font-size: 12px; font-weight: 700; {'border: 2px solid #e2e8f0;' if active_step < 3 else ''}">{s3_num}</div>
+                        <div style="font-size: 11.5px; {s3_txt}">Risk Quantification</div>
+                    </div>
+                    <div style="z-index: 2; text-align: center; width: 22%;">
+                        <div class="{s4_pulse}" style="width: 32px; height: 32px; border-radius: 50%; background: {s4_bg}; color: {'white' if active_step == 4 else '#94a3b8'}; display: flex; align-items: center; justify-content: center; margin: 0 auto 8px auto; font-size: 12px; font-weight: 700; {'border: 2px solid #e2e8f0;' if active_step < 4 else ''}">{s4_num}</div>
+                        <div style="font-size: 11.5px; {s4_txt}">Memo Synthesis</div>
                     </div>
                 </div>
             </div>
             <style>
-                .luxury-spinner {{
-                    width: 50px;
-                    height: 50px;
-                    border: 3.5px solid #f1f5f9;
-                    border-top: 3.5px solid #2563eb;
-                    border-radius: 50%;
-                    margin: 0 auto 1.5rem auto;
-                    animation: spin 1s cubic-bezier(0.55, 0.055, 0.675, 0.19) infinite;
-                }}
-                @keyframes spin {{ 0% {{ transform: rotate(0deg); }} 100% {{ transform: rotate(360deg); }} }}
                 @keyframes pulse-ring {{
-                    0% {{ box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.4); }}
-                    70% {{ box-shadow: 0 0 0 10px rgba(37, 99, 235, 0); }}
+                    0% {{ box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.5); }}
+                    70% {{ box-shadow: 0 0 0 8px rgba(37, 99, 235, 0); }}
                     100% {{ box-shadow: 0 0 0 0 rgba(37, 99, 235, 0); }}
                 }}
                 .pulse-node {{ animation: pulse-ring 1.5s infinite; }}
@@ -359,112 +351,103 @@ if "pipeline_stage" in strl.session_state and strl.session_state["pipeline_stage
             """
         )
 
-    # STATE STEP 1: COMPLIANCE MANDATES
-    if current_stage == "COMPLIANCE":
-        draw_progress_screen(1, "Running deterministic policy rule checks...")
+    if current_stage == "PARALLEL_EXECUTION":
         
-
-        cache_dir = Path("cache")
-        cache_dir.mkdir(exist_ok=True)
+        import concurrent.futures
+        import threading
+        from streamlit.runtime.scriptrunner import get_script_run_ctx, add_script_run_ctx
         
-        # Scope compliance cache explicitly to the user session
-        user_comp_cache = cache_dir / f"compliance_report_{current_user}.json"
-        comp_report = None
-
-        if use_cache and user_comp_cache.exists():
-            try:
-                with open(user_comp_cache, "r") as f:
-                    comp_report = ComplianceReport.model_validate(json.load(f))
-                strl.session_state["compliance_report"] = comp_report
-            except Exception:
-                comp_report = None
-
-        if comp_report is None:
-            compliance_agent = ComplianceAgent()
-            # Explicitly passing user_id to align with the core standard
-            comp_report = compliance_agent.assess_deal_compliance(deal_dict)
-            strl.session_state["compliance_report"] = comp_report
-            with open(user_comp_cache, "w") as f:
-                json.dump(comp_report.model_dump(), f, indent=4)
-
-        strl.session_state["pipeline_stage"] = "FINANCIAL"
-        strl.rerun()
-
-
-    # STATE STEP 2: FINANCIAL PERFORMANCE (UPDATED TO MATCH RISK)
-    elif current_stage == "FINANCIAL":
-        draw_progress_screen(2, "Auditing financial trajectories and model sanity...")
+        from vc_deal_review.agents.compliance_agent import ComplianceAgent
+        from vc_deal_review.agents.financial_agent import FinancialAgent
+        from vc_deal_review.agents.risk_agent import RiskAgent
         
-        cache_dir = Path("cache")
-        cache_dir.mkdir(exist_ok=True)
-        
-        # FIX: Scope financial cache explicitly to the user session
-        user_fin_cache = cache_dir / f"financial_report_{current_user}.json"
-        fin_report = None
+        from vc_deal_review.schema.compliance import ComplianceReport
+        from vc_deal_review.schema.financials import FinancialAnalysisReport
+        from vc_deal_review.schema.risk import RiskQuantifierReport
 
-        if use_cache and user_fin_cache.exists():
-            try:
-                with open(user_fin_cache, "r") as f:
-                    fin_report = FinancialAnalysisReport.model_validate(json.load(f))
-                strl.session_state["financial_report"] = fin_report
-            except Exception:
-                fin_report = None
+        # 1. Capture the parent thread's active Streamlit context
+        ctx = get_script_run_ctx()
 
-        if fin_report is None:
-            financial_agent = FinancialAgent()
-            # FIX: Explicitly pass user_id context to the operational pipeline
-            fin_report = financial_agent.analyze_financial_performance(deal_dict)
-            strl.session_state["financial_report"] = fin_report
-            with open(user_fin_cache, "w") as f:
-                json.dump(fin_report.model_dump(), f, indent=4)
-
-        strl.session_state["pipeline_stage"] = "RISK"
-        strl.rerun()
-
-    # STATE STEP 3: RISK REACT LOOP
-    elif current_stage == "RISK":
-        draw_progress_screen(3, "Executing mathematical LangGraph ReAct decision trees...")
-
-      
-        # 1. Properly align the cache path using the current user's profile identifier
-        # This prevents permission cross-contamination and fixes the missing user details
-        cache_dir = Path("cache")
-        cache_dir.mkdir(exist_ok=True)
-        user_risk_cache_file = cache_dir / f"risk_report_{current_user}.json"
-
-        risk_report = None
-
-        # 2. Evaluate the cache file cleanly
-        if use_cache and user_risk_cache_file.exists():
-            try:
-                with open(user_risk_cache_file, "r") as f:
-                    cached_risk_data = json.load(f)
-                
-                # Re-validate the JSON payload directly into your Pydantic data model
-                risk_report = RiskQuantifierReport.model_validate(cached_risk_data)
-                strl.session_state["risk_report"] = risk_report
-            except Exception:
-                # If the cache file is corrupted or outdated, gracefully fall back to a live run
-                risk_report = None
-
-        # 3. Cache Miss or Disabled: Execute the Live LangGraph ReAct Loop
-        if risk_report is None:
-            risk_agent = RiskAgent()
-            # Explicitly pass both the deal data payload and the user context
-            risk_report = risk_agent.assess_deal_risk(deal_dict, user_id=current_user)
-            strl.session_state["risk_report"] = risk_report
+        # 2. Define self-registering wrappers that run INSIDE the background threads
+        def run_compliance_with_ctx():
+            add_script_run_ctx(threading.current_thread(), ctx)
             
-            # Persist back the full structure (including your user context layers) to disk
-            with open(user_risk_cache_file, "w") as f:
-                json.dump(risk_report.model_dump(), f, indent=4)
+            user_comp_cache = CACHE_DIR / f"compliance_report_{current_user}.json"
+            if use_cache and user_comp_cache.exists():
+                try:
+                    with open(user_comp_cache, "r") as f:
+                        return ComplianceReport.model_validate(json.load(f))
+                except Exception:
+                    pass
+            
+            agent = ComplianceAgent()
+            report = agent.assess_deal_compliance(deal_dict)
+            with open(user_comp_cache, "w") as f:
+                json.dump(report.model_dump(), f, indent=4)
+            return report
 
-        # ADVANCE CLEANLY TO THE SYNTHESIZER
+        def run_financial_with_ctx():
+            add_script_run_ctx(threading.current_thread(), ctx)
+            
+            user_fin_cache = CACHE_DIR / f"financial_report_{current_user}.json"
+            if use_cache and user_fin_cache.exists():
+                try:
+                    with open(user_fin_cache, "r") as f:
+                        return FinancialAnalysisReport.model_validate(json.load(f))
+                except Exception:
+                    pass
+            
+            agent = FinancialAgent()
+            report = agent.analyze_financial_performance(deal_dict)
+            with open(user_fin_cache, "w") as f:
+                json.dump(report.model_dump(), f, indent=4)
+            return report
+
+        def run_risk_with_ctx():
+            add_script_run_ctx(threading.current_thread(), ctx)
+            
+            user_risk_cache = CACHE_DIR / f"risk_report_{current_user}.json"
+            if use_cache and user_risk_cache.exists():
+                try:
+                    with open(user_risk_cache, "r") as f:
+                        return RiskQuantifierReport.model_validate(json.load(f))
+                except Exception:
+                    pass
+            
+            agent = RiskAgent()
+            report = agent.assess_deal_risk(deal_dict, user_id=current_user)
+            with open(user_risk_cache, "w") as f:
+                json.dump(report.model_dump(), f, indent=4)
+            return report
+
+        # 3. Concurrent Execution Layer
+        try:
+
+            draw_progress_screen(2, "Spawning concurrent Compliance, Financial, and Risk intelligence engines...")
+            
+            with concurrent.futures.ThreadPoolExecutor(max_workers=3) as executor:
+                # Submit the self-registering context functions instead
+                future_comp = executor.submit(run_compliance_with_ctx)
+                future_fin = executor.submit(run_financial_with_ctx)
+                future_risk = executor.submit(run_risk_with_ctx)
+                
+                # Resolve thread block results synchronously (completely avoiding internal ._thread access)
+                strl.session_state["compliance_report"] = future_comp.result()
+                strl.session_state["financial_report"] = future_fin.result()
+                strl.session_state["risk_report"] = future_risk.result()
+            draw_progress_screen(4, "Parallel checks complete. Transferring payloads to Synthesis agent...")
+
+        except Exception as e:
+            strl.error(f"Critical error occurred in parallel intelligence thread pool: {str(e)}")
+            strl.stop()
+
+        # Route immediately forward to narrative parsing
         strl.session_state["pipeline_stage"] = "SYNTHESIZE"
         strl.rerun()
 
     # STATE STEP 4: ROUTING EVALUATION
     elif current_stage == "SYNTHESIZE":
-        draw_progress_screen(3, "Synthesizing multi-agent findings into structured memo drafts...")
+        draw_progress_screen(4, "Synthesizing multi-agent findings into structured memo drafts...")
         
         from vc_deal_review.agents.synthesizer_agent import SynthesizerAgent
         
@@ -482,10 +465,10 @@ if "pipeline_stage" in strl.session_state and strl.session_state["pipeline_stage
             "remediation_notes": ""
         }
     
-    # Dynamically branch destination based on rule evaluation
-    strl.session_state["analysis_triggered"] = True
-    strl.session_state["pipeline_stage"] = strl.session_state["synthesis_report"].routing_destination  
-    strl.rerun()
+        # Dynamically branch destination based on rule evaluation
+        strl.session_state["analysis_triggered"] = True
+        strl.session_state["pipeline_stage"] = strl.session_state["synthesis_report"].routing_destination  
+        strl.rerun()
 
 
 
@@ -565,7 +548,7 @@ elif "active_deal_data" in strl.session_state:
                 )
                 # Clicking this button initializes our non-blocking state processing track
                 if strl.button("Execute Intelligence Run", type="primary", use_container_width=True):
-                    strl.session_state["pipeline_stage"] = "COMPLIANCE"
+                    strl.session_state["pipeline_stage"] = "PARALLEL_EXECUTION"
                     strl.rerun()
         else:
             with strl.container():
@@ -615,30 +598,143 @@ elif "active_deal_data" in strl.session_state:
     </div>
     """
 
-    main_tab1, main_tab2 = strl.tabs(["📊 Extracted Profile", "📝 Analysis Report"])
 
-    with main_tab1:
+
+    # Helper layout container for the metric profile cards
+    def render_extracted_profile_workspace(fin_html: str, struct_html: str):
         strl.markdown("<br>", unsafe_allow_html=True)
         strl.markdown(
             f"""
             <div style="display: flex; flex-direction: row; gap: 1.5rem; width: 100%; align-items: stretch;">
-                <div style="flex: 1;">{financial_html}</div>
-                <div style="flex: 1;">{structural_html}</div>
+                <div style="flex: 1;">{fin_html}</div>
+                <div style="flex: 1;">{struct_html}</div>
             </div>
             """,
             unsafe_allow_html=True
         )
+
+    # Helper layout container for the multi-agent sub-tabs
+    def render_analysis_report_workspace():
+        current_stage = strl.session_state.get("pipeline_stage", "COMPLETE")
         
-    with main_tab2:
-        # Expand tabs to include the Synthesizer workspace
+        if current_stage == "HUMAN_REVIEW":
+            strl.markdown(
+                """
+                <div style="background-color: #fff7ed; border-left: 5px solid #f97316; padding: 1rem; border-radius: 6px; margin-bottom: 1.5rem;">
+                    <strong style="color: #c2410c; font-size: 15px;">⚠️ Attention Required:</strong> 
+                    This deal has triggered institutional escalation parameters. Please review the <b>Investment Committee Memo</b> workspace below to authorize or decline.
+                </div>
+                """, unsafe_allow_html=True
+            )
+
         sub_tab1, sub_tab2, sub_tab3, sub_tab4 = strl.tabs([
+            "📋 Investment Committee Memo",
             "Compliance Mandates",
             "Financial Performance",
-            "Risk Quantification",
-            "📝 Executive Memo (HITL)"
+            "Risk Quantification"
         ])
         
+        # --- SUB-TAB 1: INVESTMENT COMMITTEE MEMO & SIGN-OFF ---
         with sub_tab1:
+            strl.markdown("<br>", unsafe_allow_html=True)
+            if "synthesis_report" in strl.session_state and strl.session_state["synthesis_report"] is not None:
+                synth = strl.session_state["synthesis_report"]
+                
+                if current_stage == "HUMAN_REVIEW":
+                    strl.markdown("### ⚡ Executive Escalation & Sign-Off Desk")
+                    strl.error("#### 🛑 Triggered Exceptions Requiring Committee Review:")
+                    for reason in synth.triggered_reasons:
+                        strl.markdown(f"- **{reason}**")
+                        
+                    strl.markdown("#### Select Final Authorization Stance:")
+                    col_b1, col_b2 = strl.columns(2)
+                    with col_b1:
+                        if strl.button("💚 Approve Escalation & Proceed", type="primary", use_container_width=True):
+                            strl.session_state["synthesis_report"].suggested_recommendation = "PROCEED (AUTHORIZED OVERRIDE)"
+                            strl.session_state["pipeline_stage"] = "COMPLETE"
+                            strl.success("Diligence authorization committed successfully!")
+                            strl.rerun()
+                    with col_b2:
+                        if strl.button("🛑 Decline / Strategic Hold", type="secondary", use_container_width=True):
+                            strl.session_state["synthesis_report"].suggested_recommendation = "REJECTED / STRATEGIC_HOLD"
+                            strl.session_state["pipeline_stage"] = "COMPLETE"
+                            strl.error("Deal closure committed to historical audit records.")
+                            strl.rerun()
+
+                    strl.markdown("---")
+                    strl.markdown("#### 📝 Edit Draft Memorandum Text")
+                    user_summary = strl.text_area("Executive Summary & Investment Thesis", value=strl.session_state["edited_memo"]["executive_summary"], height=250)
+                    strl.session_state["edited_memo"]["executive_summary"] = user_summary
+                    
+                    user_remediation = strl.text_area("Diligence Mitigations / Closing Comments", value=strl.session_state["edited_memo"]["remediation_notes"], placeholder="Provide executive commentary...", height=120)
+                    strl.session_state["edited_memo"]["remediation_notes"] = user_remediation
+                else:
+                    final_rec = synth.suggested_recommendation
+                    banner_style = "background-color: #ecfdf5; border-left: 5px solid #10b981; color: #065f46;" if "PROCEED" in final_rec else "background-color: #fef2f2; border-left: 5px solid #ef4444; color: #991b1b;"
+                    title_text = "✅ LOCKED INVESTMENT COMMITTEE MEMORANDUM" if "PROCEED" in final_rec else "🛑 ARCHIVED AUDIT TRAIL REJECTION RECORD"
+                        
+                    strl.markdown(f'<div style="{banner_style} padding: 1.5rem; border-radius: 4px; margin-bottom: 1.5rem;"><h3 style="margin-top:0; color: inherit; font-size:18px;">{title_text}</h3><b>Authorized Deal Stance:</b> {final_rec}<br><b>Pipeline Lifecycle:</b> Verified & Archived</div>', unsafe_allow_html=True)
+                    strl.markdown("#### 📖 Executive Summary & Thesis Narrative")
+                    strl.write(strl.session_state["edited_memo"]["executive_summary"])
+                    if strl.session_state["edited_memo"]["remediation_notes"]:
+                        strl.markdown("#### 📝 Reviewer Diligence Remediation Notes")
+                        strl.info(strl.session_state["edited_memo"]["remediation_notes"])
+            else:
+                strl.info("Execute the Intelligence Run pipeline above to compile the final Synthesis Memorandum.")
+
+        # --- SUB-TAB 2: COMPLIANCE ---
+        with sub_tab2:
+            strl.markdown("<br>", unsafe_allow_html=True)
+            if "compliance_report" in strl.session_state:
+                report = strl.session_state["compliance_report"]
+                color_hex = {"APPROVED": "#22c55e", "REVIEW_REQUIRED": "#f97316", "BLOCKED": "#ef4444"}
+                stance_color = color_hex.get(report.overall_status, "#64748b")
+                strl.markdown(f'<div style="background-color: {stance_color}10; border-left: 4px solid {stance_color}; padding: 12px; border-radius: 4px; margin-bottom: 1.5rem; font-size: 14px;"><b>Policy Status:</b> {report.overall_status}</div>', unsafe_allow_html=True)
+                for finding in report.findings:
+                    f_icon = "✅" if finding.status == "PASS" else ("⚠️" if finding.status == "WARNING" else "🛑")
+                    col_f1, col_f2 = strl.columns([0.25, 0.75])
+                    col_f1.markdown(f"<div class='report-finding-header'>{f_icon} {finding.rule_name}</div>", unsafe_allow_html=True)
+                    col_f2.markdown(f"<div class='report-finding-details'><i>{finding.details}</i></div><div class='report-finding-meta'>Extracted: {finding.extracted_value} | Required: {finding.threshold_applied}</div>", unsafe_allow_html=True)
+            else:
+                strl.info("Trigger 'Execute Intelligence Run' above to activate analysis tracks.")
+
+        # --- SUB-TAB 3: FINANCIALS ---
+        with sub_tab3:
+            strl.markdown("<br>", unsafe_allow_html=True)
+            if "financial_report" in strl.session_state:
+                fin_report = strl.session_state["financial_report"]
+                color_hex = {"APPROVED": "#22c55e", "REVIEW_REQUIRED": "#f97316", "BLOCKED": "#ef4444"}
+                stance_color = color_hex.get(fin_report.overall_status, "#64748b")
+                strl.markdown(f'<div style="background-color: {stance_color}10; border-left: 4px solid {stance_color}; padding: 12px; border-radius: 4px; margin-bottom: 1.5rem; font-size: 14px;"><b>Financial Profile Stance:</b> {fin_report.overall_status}</div>', unsafe_allow_html=True)
+                for finding in fin_report.findings:
+                    f_icon = "✅" if finding.status == "PASS" else ("⚠️" if finding.status == "WARNING" else "🛑")
+                    col_f1, col_f2 = strl.columns([0.25, 0.75])
+                    col_f1.markdown(f"<div class='report-finding-header'>{f_icon} {finding.rule_name}</div>", unsafe_allow_html=True)
+                    col_f2.markdown(f"<div class='report-finding-details'><i>{finding.details}</i></div><div class='report-finding-meta'>Extracted: {finding.extracted_value} | Benchmark Target: {finding.threshold_applied}</div>", unsafe_allow_html=True)
+                strl.markdown("<div style='margin-top: 1.5rem;'></div>", unsafe_allow_html=True)
+                strl.markdown("#### 🔍 Forward Model Sanity Audit")
+                strl.info(fin_report.projections_sanity_check)
+            else:
+                strl.info("Trigger 'Execute Intelligence Run' above to evaluate financial track performance mechanics.")
+
+        # --- SUB-TAB 4: RISK ---
+        with sub_tab4:
+            strl.markdown("<br>", unsafe_allow_html=True)
+            if "risk_report" in strl.session_state:
+                risk_report = strl.session_state["risk_report"]
+                color_hex = {"APPROVED": "#22c55e", "REVIEW_REQUIRED": "#f97316", "BLOCKED": "#ef4444"}
+                stance_color = color_hex.get(risk_report.overall_status, "#64748b")
+                strl.markdown(f'<div style="display: flex; gap: 1rem; margin-bottom: 1.5rem;"><div style="flex: 1; background-color: {stance_color}10; border-left: 4px solid {stance_color}; padding: 12px; border-radius: 4px; font-size: 14px;"><b>Risk Exposure Tier:</b> {risk_report.overall_status}</div><div style="flex: 1; background-color: #f1f5f9; border-left: 4px solid #475569; padding: 12px; border-radius: 4px; font-size: 14px;"><b>Verified Operational Runway:</b> {risk_report.calculated_runway_months:.1f} Months</div><div style="flex: 1; background-color: #fef2f2; border-left: 4px solid #ef4444; padding: 12px; border-radius: 4px; font-size: 14px;"><b>Max Flagged Severity:</b> {risk_report.highest_severity_score} / 10</div></div>', unsafe_allow_html=True)
+                for finding in risk_report.findings:
+                    f_icon = "✅" if finding.status == "PASS" else ("⚠️" if finding.status == "WARNING" else "🛑")
+                    col_f1, col_f2 = strl.columns([0.25, 0.75])
+                    col_f1.markdown(f"<div class='report-finding-header'>{f_icon} {finding.rule_name}</div>", unsafe_allow_html=True)
+                    col_f2.markdown(f"<div class='report-finding-details'>{finding.details}</div><div class='report-finding-meta'>Calculated Metric: {finding.extracted_value} | Threshold Constraint: {finding.threshold_applied}</div>", unsafe_allow_html=True)
+            else:
+                strl.info("Trigger 'Execute Intelligence Run' above to run the ReAct risk loop tracker.")
+
+        # --- SUB-TAB 2: COMPLIANCE ---
+        with sub_tab2:
             strl.markdown("<br>", unsafe_allow_html=True)
             if "compliance_report" in strl.session_state:
                 report = strl.session_state["compliance_report"]
@@ -649,17 +745,13 @@ elif "active_deal_data" in strl.session_state:
                 for finding in report.findings:
                     f_icon = "✅" if finding.status == "PASS" else ("⚠️" if finding.status == "WARNING" else "🛑")
                     col_f1, col_f2 = strl.columns([0.25, 0.75])
-                    
                     col_f1.markdown(f"<div class='report-finding-header'>{f_icon} {finding.rule_name}</div>", unsafe_allow_html=True)
-                    col_f2.markdown(
-                        f"<div class='report-finding-details'><i>{finding.details}</i></div>"
-                        f"<div class='report-finding-meta'>Extracted: {finding.extracted_value} | Required: {finding.threshold_applied}</div>", 
-                        unsafe_allow_html=True
-                    )
+                    col_f2.markdown(f"<div class='report-finding-details'><i>{finding.details}</i></div><div class='report-finding-meta'>Extracted: {finding.extracted_value} | Required: {finding.threshold_applied}</div>", unsafe_allow_html=True)
             else:
                 strl.info("Trigger 'Execute Intelligence Run' above to activate analysis tracks.")
 
-        with sub_tab2:
+        # --- SUB-TAB 3: FINANCIALS ---
+        with sub_tab3:
             strl.markdown("<br>", unsafe_allow_html=True)
             if "financial_report" in strl.session_state:
                 fin_report = strl.session_state["financial_report"]
@@ -667,17 +759,11 @@ elif "active_deal_data" in strl.session_state:
                 stance_color = color_hex.get(fin_report.overall_status, "#64748b")
                 
                 strl.markdown(f'<div style="background-color: {stance_color}10; border-left: 4px solid {stance_color}; padding: 12px; border-radius: 4px; margin-bottom: 1.5rem; font-size: 14px;"><b>Financial Profile Stance:</b> {fin_report.overall_status}</div>', unsafe_allow_html=True)
-                
                 for finding in fin_report.findings:
                     f_icon = "✅" if finding.status == "PASS" else ("⚠️" if finding.status == "WARNING" else "🛑")
                     col_f1, col_f2 = strl.columns([0.25, 0.75])
-                    
                     col_f1.markdown(f"<div class='report-finding-header'>{f_icon} {finding.rule_name}</div>", unsafe_allow_html=True)
-                    col_f2.markdown(
-                        f"<div class='report-finding-details'><i>{finding.details}</i></div>"
-                        f"<div class='report-finding-meta'>Extracted: {finding.extracted_value} | Benchmark Target: {finding.threshold_applied}</div>", 
-                        unsafe_allow_html=True
-                    )
+                    col_f2.markdown(f"<div class='report-finding-details'><i>{finding.details}</i></div><div class='report-finding-meta'>Extracted: {finding.extracted_value} | Benchmark Target: {finding.threshold_applied}</div>", unsafe_allow_html=True)
                 
                 strl.markdown("<div style='margin-top: 1.5rem;'></div>", unsafe_allow_html=True)
                 strl.markdown("#### 🔍 Forward Model Sanity Audit")
@@ -685,7 +771,8 @@ elif "active_deal_data" in strl.session_state:
             else:
                 strl.info("Trigger 'Execute Intelligence Run' above to evaluate financial track performance mechanics.")
 
-        with sub_tab3:
+        # --- SUB-TAB 4: RISK ---
+        with sub_tab4:
             strl.markdown("<br>", unsafe_allow_html=True)
             if "risk_report" in strl.session_state:
                 risk_report = strl.session_state["risk_report"]
@@ -695,120 +782,43 @@ elif "active_deal_data" in strl.session_state:
                 strl.markdown(
                     f"""
                     <div style="display: flex; gap: 1rem; margin-bottom: 1.5rem;">
-                        <div style="flex: 1; background-color: {stance_color}10; border-left: 4px solid {stance_color}; padding: 12px; border-radius: 4px; font-size: 14px;">
-                            <b>Risk Exposure Tier:</b> {risk_report.overall_status}
-                        </div>
-                        <div style="flex: 1; background-color: #f1f5f9; border-left: 4px solid #475569; padding: 12px; border-radius: 4px; font-size: 14px;">
-                            <b>Verified Operational Runway:</b> {risk_report.calculated_runway_months:.1f} Months
-                        </div>
-                        <div style="flex: 1; background-color: #fef2f2; border-left: 4px solid #ef4444; padding: 12px; border-radius: 4px; font-size: 14px;">
-                            <b>Max Flagged Severity:</b> {risk_report.highest_severity_score} / 10
-                        </div>
+                        <div style="flex: 1; background-color: {stance_color}10; border-left: 4px solid {stance_color}; padding: 12px; border-radius: 4px; font-size: 14px;"><b>Risk Exposure Tier:</b> {risk_report.overall_status}</div>
+                        <div style="flex: 1; background-color: #f1f5f9; border-left: 4px solid #475569; padding: 12px; border-radius: 4px; font-size: 14px;"><b>Verified Operational Runway:</b> {risk_report.calculated_runway_months:.1f} Months</div>
+                        <div style="flex: 1; background-color: #fef2f2; border-left: 4px solid #ef4444; padding: 12px; border-radius: 4px; font-size: 14px;"><b>Max Flagged Severity:</b> {risk_report.highest_severity_score} / 10</div>
                     </div>
-                    """, 
-                    unsafe_allow_html=True
+                    """, unsafe_allow_html=True
                 )
-                
                 for finding in risk_report.findings:
                     f_icon = "✅" if finding.status == "PASS" else ("⚠️" if finding.status == "WARNING" else "🛑")
                     col_f1, col_f2 = strl.columns([0.25, 0.75])
-                    
                     col_f1.markdown(f"<div class='report-finding-header'>{f_icon} {finding.rule_name}</div>", unsafe_allow_html=True)
-                    col_f2.markdown(
-                        f"<div class='report-finding-details'>{finding.details}</div>"
-                        f"<div class='report-finding-meta'>Calculated Metric: {finding.extracted_value} | Threshold Constraint: {finding.threshold_applied}</div>", 
-                        unsafe_allow_html=True
-                    )
+                    col_f2.markdown(f"<div class='report-finding-details'>{finding.details}</div><div class='report-finding-meta'>Calculated Metric: {finding.extracted_value} | Threshold Constraint: {finding.threshold_applied}</div>", unsafe_allow_html=True)
             else:
-                strl.info("Trigger 'Execute Intelligence Run' above to run the ReAct mathematical risk loop tracker.")
+                strl.info("Trigger 'Execute Intelligence Run' above to run the ReAct risk loop tracker.")
 
-        with sub_tab4:
-                    strl.markdown("<br>", unsafe_allow_html=True)
-                    
-                    if "synthesis_report" in strl.session_state:
-                        synth = strl.session_state["synthesis_report"]
-                        current_stage = strl.session_state.get("pipeline_stage", "COMPLETE")
-                        
-                        # INTERCEPT PATHWAY: ESCALATION CRITERIA BREACHED
-                        if current_stage == "HUMAN_REVIEW":
-                            strl.markdown("### ⚠️ Institutional Escalation Triggered")
-                            
-                            # Clearly expose which automated rules failed
-                            strl.error("#### 🛑 Threshold Violations Required for Review:")
-                            for reason in synth.triggered_reasons:
-                                strl.markdown(f"- **{reason}**")
-                                
-                            strl.markdown("---")
-                            strl.markdown("#### 🛠️ Human-in-the-Loop Override Workspace")
-                            strl.caption("Analyze the deep dives in the previous tabs, then edit the draft text or apply a final action stance below.")
-                            
-                            # Editable workspace populated with Claude's high-density synthesis
-                            user_summary = strl.text_area(
-                                "Executive Summary & Thesis Copy (Editable)",
-                                value=strl.session_state["edited_memo"]["executive_summary"],
-                                height=250
-                            )
-                            
-                            user_remediation = strl.text_area(
-                                "Diligence Mitigations / Audit Trail Closing Notes",
-                                value=strl.session_state["edited_memo"]["remediation_notes"],
-                                placeholder="Detail the out-of-band justifications for overriding this exception, or document the specific structural flaws causing deal rejection...",
-                                height=120
-                            )
-                            
-                            strl.markdown("#### Select Final Decision Authorization Stance:")
-                            col_b1, col_b2 = strl.columns(2)
-                            
-                            # ACTION PATHWAY 1: OVERWRITE & FORCE PROCEED
-                            with col_b1:
-                                if strl.button("💚 Overwrite Escalation & Proceed", type="primary", use_container_width=True):
-                                    strl.session_state["edited_memo"]["executive_summary"] = user_summary
-                                    strl.session_state["edited_memo"]["remediation_notes"] = user_remediation
-                                    strl.session_state["synthesis_report"].suggested_recommendation = "PROCEED (HUMAN OVERRIDE)"
-                                    strl.session_state["pipeline_stage"] = "COMPLETE"
-                                    strl.success("Diligence override committed successfully!")
-                                    strl.rerun()
-                                    
-                            # ACTION PATHWAY 2: AFFIRM RISK AND REJECT/HOLD
-                            with col_b2:
-                                if strl.button("🛑 Affirm Risks & Reject / Hold Deal", type="secondary", use_container_width=True):
-                                    strl.session_state["edited_memo"]["executive_summary"] = user_summary
-                                    strl.session_state["edited_memo"]["remediation_notes"] = user_remediation
-                                    strl.session_state["synthesis_report"].suggested_recommendation = "REJECTED / STRATEGIC_HOLD"
-                                    strl.session_state["pipeline_stage"] = "COMPLETE"
-                                    strl.error("Deal closure committed to historical audit records.")
-                                    strl.rerun()
+    # # -------------------------------------------------------------
+    # DYNAMIC MAIN WORKSPACE TAB FOCUS CONTROL
+    # -------------------------------------------------------------
+    has_run = strl.session_state.get("analysis_triggered", False)
 
-                        # FINALIZED PATHWAY: AUTO-PASSED OR HUMAN COMPLETED
-                        else:
-                            final_rec = synth.suggested_recommendation
-                            
-                            # Render distinct styling states depending on final action stance
-                            if "PROCEED" in final_rec:
-                                banner_style = "background-color: #ecfdf5; border-left: 5px solid #10b981; color: #065f46;"
-                                title_text = "✅ LOCKED INVESTMENT COMMITTEE MEMORANDUM"
-                            else:
-                                banner_style = "background-color: #fef2f2; border-left: 5px solid #ef4444; color: #991b1b;"
-                                title_text = "🛑 LOCKED AUDIT TRAIL RISK & REJECTION REPORT"
-                                
-                            strl.markdown(
-                                f"""
-                                <div style="{banner_style} padding: 1.5rem; border-radius: 4px; margin-bottom: 1.5rem;">
-                                    <h3 style="margin-top:0; color: inherit; font-size:18px;">{title_text}</h3>
-                                    <b>Authorized Deal Stance:</b> {final_rec}<br>
-                                    <b>Pipeline Lifecycle:</b> Verified & Archived
-                                </div>
-                                """, unsafe_allow_html=True
-                            )
-                            
-                            strl.markdown("#### 📖 Executive Summary & Thesis Narrative")
-                            strl.write(strl.session_state["edited_memo"]["executive_summary"])
-                            
-                            if strl.session_state["edited_memo"]["remediation_notes"]:
-                                strl.markdown("#### 📝 Reviewer Diligence Remediation Notes")
-                                strl.info(strl.session_state["edited_memo"]["remediation_notes"])
-                    else:
-                        strl.info("Execute Intelligence Run above to initialize the baseline Synthesis workspace.")    
+    # Shift focus by dynamically making the Analysis Report the first tab element once ready
+    if has_run:
+        main_tab1, main_tab2 = strl.tabs(["📝 Analysis Report", "📊 Extracted Profile"])
+        
+        # Scope definitions to matching index targets
+        with main_tab1:
+            render_analysis_report_workspace()
+        with main_tab2:
+            render_extracted_profile_workspace(financial_html, structural_html)
+    else:
+        main_tab1, main_tab2 = strl.tabs(["📊 Extracted Profile", "📝 Analysis Report"])
+        
+        with main_tab1:
+            render_extracted_profile_workspace(financial_html, structural_html)
+        with main_tab2:
+            render_analysis_report_workspace()
+    
+    
     strl.markdown("<br>", unsafe_allow_html=True)
     with strl.expander("🔍 View Raw Validated Schema JSON"):
         strl.json(deal_dict)
