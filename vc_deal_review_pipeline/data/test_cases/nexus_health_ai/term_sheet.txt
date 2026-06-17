@@ -1,0 +1,154 @@
+TERM SHEET
+Series A Preferred Stock Financing of NexusHealth AI,
+Inc.
+Date: June 2025
+Status: This Term Sheet is Non-Binding Except Where Noted
+Summary of Terms
+Term Detail
+Company NexusHealth AI, Inc., a Delaware corporation
+Investor Apex Venture Partners
+Type of Security Series A Convertible Preferred Stock
+Investment Amount $5,000,000
+Pre-Money Valuation $20,000,000
+Post-Money Valuation $25,000,000
+Price Per Share To be determined based on fully diluted capitalization at
+close
+Equity Issued 20% of post-money fully diluted capitalization
+Closing Date On or before 45 days from execution of this Term Sheet
+Governing Law State of Delaware
+Section 1 — Terms of the Preferred Stock
+1.1 Dividends
+Holders of Series A Preferred Stock shall be entitled to receive non-cumulative dividends at a
+rate of 8% per annum, payable only when and if declared by the Board of Directors.
+No dividends shall be paid to holders of Common Stock unless and until all accrued dividends
+on the Series A Preferred Stock have been paid in full.
+1.2 Liquidation Preference
+In the event of any liquidation, dissolution, winding-up, or deemed liquidation event, including a
+merger, acquisition, or sale of substantially all assets, holders of Series A Preferred Stock shall
+be entitled to receive, prior and in preference to any distribution to holders of Common Stock, an
+amount equal to 1x the original purchase price per share, plus any declared but unpaid
+dividends.
+The liquidation preference is non-participating. After receipt of the full liquidation preference,
+holders of Series A Preferred Stock shall have no further right or claim to the remaining assets
+of the Company.
+At the holder’s option, Series A Preferred Stock may convert to Common Stock to participate in
+any distribution that would yield a greater per-share return than the liquidation preference.
+1.3 Conversion
+Each share of Series A Preferred Stock shall be convertible at any time, at the option of the
+holder, into one share of Common Stock, subject to adjustment for stock splits, dividends, and
+recapitalizations.
+All shares of Series A Preferred Stock shall automatically convert to Common Stock upon either
+of the following:
+1. The closing of a qualified IPO at a pre-money valuation of no less than $100,000,000; or
+2. The written consent of holders of at least 60% of the outstanding Series A Preferred
+Stock.
+1.4 Anti-Dilution
+Series A Preferred Stock shall be entitled to broad-based weighted average anti-dilution
+protection in the event the Company issues new shares at a price below the Series A purchase
+price, subject to customary exceptions, including shares issued pursuant to the employee option
+pool, strategic partnerships, and equipment financings approved by the Board.
+1.5 Voting Rights
+Holders of Series A Preferred Stock shall vote on an as-converted basis together with the
+holders of Common Stock on all matters submitted to a vote of stockholders.
+Certain protective provisions shall require the separate approval of holders of at least 60% of
+the outstanding Series A Preferred Stock, including:
+1. Any amendment to the Certificate of Incorporation or Bylaws that adversely affects the
+Series A;
+2. Authorization or issuance of any equity security senior to or on parity with the Series A;
+3. Any merger, acquisition, or sale of substantially all assets;
+4. Any increase or decrease in the authorized number of shares; and
+5. Declaration of any dividend.
+Section 2 — Corporate Governance
+2.1 Board of Directors
+Upon closing, the Board of Directors shall consist of three (3) members, structured as follows:
+Board Seat Designation
+Founder Director Seat
+1
+Designated by and reserved for the Company’s
+founders
+Founder Director Seat
+2
+Designated by and reserved for the Company’s
+founders
+Investor Director Seat Designated by and reserved for Apex Venture Partners
+The two founder-designated seats shall collectively be referred to as the “Founder Directors.”
+The investor-designated seat shall be referred to as the “Investor Director.”
+All parties agree to vote their shares to maintain this board composition for so long as Apex
+Venture Partners holds at least 50% of its original Series A shares.
+2.2 Board Observer Rights
+Apex Venture Partners shall have the right to appoint one non-voting Board observer, who
+shall have the right to attend and participate in, but not vote at, all Board meetings and receive
+all materials distributed to directors.
+2.3 Board Meeting Cadence
+The Board shall meet no less than quarterly, with monthly financial reporting provided to all
+directors.
+Section 3 — Investor Rights
+3.1 Pro-Rata Rights
+Apex Venture Partners shall have the right to participate in future equity financings on a pro-rata
+basis, based on its fully diluted ownership percentage, to maintain its ownership stake through
+and including the Company’s Series B financing.
+3.2 Information Rights
+The Company shall deliver to Apex Venture Partners the following:
+1. Unaudited monthly financial statements within 15 days of month-end;
+2. Unaudited quarterly financials within 30 days of quarter-end;
+3. Audited annual financials within 90 days of fiscal year-end; and
+4. An annual operating budget approved by the Board prior to the start of each fiscal year.
+3.3 Right of First Refusal
+The Company shall grant Apex Venture Partners a right of first refusal on any proposed transfer
+of shares by founders or other major stockholders, subject to customary exceptions.
+3.4 Most Favored Nation
+If the Company issues shares to any future investor on terms more favorable than those
+contained herein, Apex Venture Partners shall have the right to elect those more favorable
+terms with respect to its existing holdings.
+Section 4 — Founder Terms
+4.1 Vesting
+All founder shares shall be subject to a 4-year vesting schedule with a 1-year cliff, with 25%
+vesting on the one-year anniversary of each founder’s start date and the remainder vesting
+monthly thereafter.
+Up to 25% of each founder’s shares may be accelerated upon a change of control event
+through single-trigger acceleration, with full acceleration available upon termination without
+cause following a change of control through double-trigger acceleration.
+4.2 Founder Lock-Up
+Founders shall be subject to a 180-day lock-up period following any qualified IPO, during
+which they may not sell, transfer, or otherwise dispose of Company shares without the prior
+written consent of the lead underwriter.
+Section 5 — Conditions to Closing
+Closing of the financing shall be subject to the following conditions:
+1. Completion of investor due diligence to Apex Venture Partners’ reasonable satisfaction;
+2. Execution of definitive agreements, including a Stock Purchase Agreement, Investors’
+Rights Agreement, Right of First Refusal and Co-Sale Agreement, and Voting
+Agreement;
+3. No material adverse change in the Company’s business, financial condition, or
+prospects; and
+4. Customary legal opinions from Company counsel.
+Section 6 — General Provisions
+6.1 Exclusivity — Binding
+For a period of 30 days from the date of execution of this Term Sheet, the Company agrees not
+to solicit, initiate, or encourage any discussions with any other potential investor regarding a
+financing on substantially similar terms.
+This Section 6.1 is legally binding.
+6.2 Expenses
+The Company shall reimburse Apex Venture Partners for reasonable legal fees incurred in
+connection with this transaction, not to exceed $25,000, payable at closing.
+6.3 Confidentiality — Binding
+The terms and existence of this Term Sheet shall be kept confidential by both parties and shall
+not be disclosed to any third party without the prior written consent of the other party, except as
+required by law.
+This Section 6.3 is legally binding.
+6.4 Non-Binding Nature
+Except for Section 6.1 — Exclusivity, Section 6.2 — Expenses, and Section 6.3 —
+Confidentiality, this Term Sheet is not a binding agreement and does not obligate either party
+to consummate the proposed transaction.
+A binding obligation will arise only upon execution of definitive transaction documents.
+Agreed and Acknowledged
+NexusHealth AI, Inc. Apex Venture Partners
+By: _________________________ By: _________________________
+Name:
+_______________________
+Name:
+_______________________
+Title: Founder & CEO Title: Managing Partner
+Date:
+________________________
+Date:
+________________________

@@ -1,0 +1,134 @@
+Executive Summary
+This memo outlines NexusHealth AI's current financial position, our 3-year forward
+projections, and a detailed breakdown of how we intend to deploy the $5,000,000
+Series A investment to achieve sustainable growth and reach cash flow breakeven by
+month 18 post-close.
+---
+Section 1: Current Financial Position (Pre-Investment
+Baseline)
+As of the date of this memo, our financial position is as follows:
+Our cash balance stands at $1,500,000. Against a net monthly burn of $400,000, this
+gives us approximately 3.75 months of runway — a fact that underscores both the
+urgency of closing this round and our confidence that the pipeline and traction metrics
+justify it.
+Monthly Revenue: $100,000 (equating to $1,200,000 ARR across 6 active hospital
+contracts)
+Monthly Expenses: $500,000, broken down as follows:
+Personnel costs represent the largest line item at approximately $290,000 per month,
+covering our current team of 18 full-time employees across engineering, product, sales,
+and customer success. Cloud infrastructure and model compute costs run $55,000
+monthly — a figure that scales modestly with new client deployments due to our
+multi-tenant architecture. Sales and marketing spend is $75,000 per month, currently
+weighted toward conference presence and outbound SDR activity. General and
+administrative costs, including legal, finance, and office operations, account for the
+remaining $80,000 monthly.
+Net Monthly Burn: $500,000 expenses minus $100,000 revenue equals a net cash burn
+of $400,000 per month.
+It is worth noting that our gross margin on recognized revenue is approximately 74%,
+meaning the cash drag is not a product efficiency problem — it is a deliberate
+investment in growth ahead of a revenue base that is still maturing.
+---
+Section 2: Use of $5,000,000 Series A Proceeds
+The $5,000,000 investment will be deployed over a 24-month period with two primary
+objectives: accelerating revenue growth through sales expansion, and deepening our
+product moat through engineering investment. Secondary allocations cover customer
+success capacity and working capital.
+Engineering Hires — $1,750,000 (35% of total raise)
+This is our single largest allocation and reflects a deliberate decision to widen the
+technical gap between NexusHealth AI and any emerging competition. Over the first 18
+months, we will hire 7 additional engineers, including two senior ML engineers focused
+on model accuracy and generalization across EHR environments, two backend
+engineers to build new EHR integration connectors beyond our current Epic and Cerner
+support, one data infrastructure engineer to scale our FHIR pipeline as client volume
+grows, one product engineer focused on our clinician-facing alert interface, and one
+security and compliance engineer to support SOC 2 Type II certification and HIPAA
+audit readiness as we enter enterprise procurement with larger health systems.
+At fully-loaded costs averaging $175,000–$200,000 per engineer per year, this
+allocation covers both hiring and 12–18 months of fully-loaded compensation for each
+new role.
+Sales Expansion — $1,500,000 (30% of total raise)
+Our current sales team of three reps has produced $1.2M in ARR. The math on scaling
+is straightforward: each additional quota-carrying rep, at a target of $600,000–$800,000
+in new ARR annually, pays back their cost within 12 months at our current contract
+values.
+This allocation funds the hiring of 6 additional quota-carrying account executives with
+existing health system relationships, one Director of Sales to manage the expanded
+team, an increase in SDR capacity from 1 to 3 to support pipeline generation, a 3x
+increase in conference and field marketing spend to drive awareness across the
+regional health system segment, and investment in a channel partnership program to
+leverage EHR vendor relationships for co-sell and referral motions.
+Customer Success & Implementation — $750,000 (15% of total raise)
+Revenue retention is our most important near-term financial metric. Our current 92%
+gross retention is strong, but it is maintained by a CS team that is close to capacity. This
+allocation funds 3 additional implementation and customer success managers, a
+structured 90-day onboarding playbook with embedded outcome tracking, and a client
+health scoring system to identify and address expansion and at-risk signals proactively.
+General & Administrative / Working Capital — $500,000 (10% of total raise)
+This covers incremental G&A costs associated with operating as a Series A company —
+specifically audit and accounting infrastructure, D&O insurance, legal fees associated
+with enterprise contract negotiations, and a modest working capital buffer.
+Total Allocated: $4,500,000. The remaining $500,000 is held as a contingency reserve
+against delayed sales cycles or higher-than-projected ramp costs in the new
+engineering hires.
+---
+Section 3: 3-Year Financial Projections
+The projections below are built on bottom-up assumptions tied to sales headcount,
+average contract values, and historical sales cycle lengths of 3–5 months for mid-size
+health systems.
+Year 1 (Months 1–12 Post-Investment Close)
+In the first year, sales ramp takes 3–4 months as new account executives build pipeline.
+We project closing 12–15 new hospital contracts at an average ACV of $200,000,
+bringing total ARR to approximately $4,800,000 by month 12. Monthly revenue exits the
+year at approximately $400,000. Total expenses will increase as new hires come online,
+peaking at approximately $750,000 per month in months 8–10 before new revenue
+begins to offset the cost base meaningfully. Net cash burn for Year 1 is projected at
+approximately $3,200,000.
+Year 2 (Months 13–24)
+By the start of Year 2, our sales team is fully ramped and our pipeline is substantially
+larger. We project closing an additional 20–25 contracts, including our first multi-facility
+health system deals at ACVs of $350,000–$500,000. We project exiting Year 2 with
+$10,500,000 in ARR and monthly revenue of approximately $875,000. Critically, we
+project reaching cash flow breakeven in month 18, as monthly revenue crosses the
+monthly expense run rate. Total expenses by end of Year 2 are projected at
+approximately $850,000 monthly, held in check by the leverage inherent in our SaaS
+model — each new contract adds minimal marginal cost. Net cash position at end of
+Year 2, assuming $5M investment and Year 1 burn, is projected at approximately
+$1,100,000–$1,400,000, providing a thin but sufficient runway into a Series B raise from
+a position of demonstrated efficiency.
+Year 3 (Months 25–36)
+Year 3 is a profitability and Series B setup story. With a fully ramped team, mature
+channel partnerships, and strong renewal and expansion revenue from our growing
+installed base, we project exiting Year 3 with $18,000,000 in ARR. Gross margins
+improve to approximately 77% as infrastructure costs scale sublinearly with revenue.
+We project net income turning positive in Q3 of Year 3 on a monthly basis. This
+positions NexusHealth AI to either raise a Series B from a place of leverage — not
+urgency — or to evaluate a path to profitability on existing capital.
+---
+Section 4: Key Financial Risks & Mitigations
+No financial projection is complete without an honest accounting of the assumptions
+that could prove wrong.
+The primary risk is sales cycle elongation. Health system procurement can extend
+beyond our modeled 3–5 months, particularly in a macro environment where hospital
+CFOs face margin pressure. Our mitigation is a pipeline coverage ratio target of 4x
+quota and an active LOI-stage pipeline of $2.1M already in place at the time of this
+memo.
+The second risk is engineering talent cost inflation. We have modeled conservatively at
+$185,000 fully-loaded per engineer, but the ML talent market remains competitive. We
+have partially mitigated this through early conversations with three senior candidates
+already at offer stage.
+Finally, EHR integration complexity can extend deployment timelines and delay revenue
+recognition. Our investment in a dedicated security and infrastructure engineer, and our
+expanding pre-built connector library, is designed to bring average deployment time
+below 6 weeks consistently.
+---
+Conclusion
+NexusHealth AI is at an inflection point. Our unit economics are sound, our retention is
+strong, and our pipeline validates that product-market fit is real. The $5,000,000 Series
+A investment, deployed as described above, gives us a clear and credible path to $18M
+ARR, cash flow breakeven at month 18, and a Series B raise from a position of
+strength.
+We are raising this round with urgency and conviction.
+—
+This document is confidential and intended solely for prospective investors under NDA.
+Forward-looking statements are based on management estimates and are subject to
+material risks and uncertainties.

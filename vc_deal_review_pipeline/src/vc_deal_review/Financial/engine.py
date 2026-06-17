@@ -1,0 +1,77 @@
+import json
+from vc_deal_review.agents.base_agent import BaseAgent
+from vc_deal_review.Financial.models import FinancialAnalysisReport
+from vc_deal_review.Compliance.models import RuleResult
+
+class FinancialEngine(BaseAgent):
+    def __init__(self):
+        super().__init__(temperature=0.0)
+        self.structured_llm = self.llm.with_structured_output(FinancialAnalysisReport)
+
+    def analyze_financial_performance(self, deal_data: dict) -> FinancialAnalysisReport:
+        """
+        Runs a financial audit mirrored exactly after the compliance track layout.
+        """
+        metadata = deal_data.get("metadata", {})
+        financials = deal_data.get("financials", {})
+        company_name = metadata.get("company_name", "Unknown Entity")
+        
+        # --- Deterministic Math Baselines (Calculated via Python) ---
+        cash_bal = financials.get("current_cash_balance", 0.0)
+        burn_rate = financials.get("monthly_burn_rate", 1.0)
+        runway = (cash_bal / burn_rate) if burn_rate > 0 else 999.0
+        
+        ask_amt = financials.get("ask_amount", 0.0)
+        arr = financials.get("annual_recurring_revenue", 0.0)
+        efficiency = (ask_amt / arr) if arr > 0 else 0.0
+
+        system_instructions = (
+            "You are an elite institutional Venture Capital Forensic CFO. Your task is to evaluate the financial profile "
+            "of an investment target. You must structure your output metrics using the 'RuleResult' format to mirror our "
+            "compliance reporting style perfectly.\n\n"
+            
+            "CRITICAL PRE-CALCULATED DATA (Enforce these exact numbers in your findings): \n"
+            f"- Deterministic Runway: {runway:.1f} months\n"
+            f"- Deterministic Capital Efficiency (Hype Factor): {efficiency:.2f}\n\n"
+            
+            "CRITERIA TO GRADE IN THE FINDINGS LIST:\n"
+            "1. Cash Runway Safety Margin:\n"
+            f"   - rule_name: 'Cash Runway Safety Margin'\n"
+            f"   - status: 'PASS' if runway >= 12 else 'WARNING'\n"
+            f"   - extracted_value: '{runway:.1f} months'\n"
+            "   - threshold_applied: '≥ 12.0 months'\n"
+            "   - details: Provide a crisp, professional summary matching our underwriting tone.\n\n"
+            
+            "2. Capital Efficiency Factor:\n"
+            "   - rule_name: 'Capital Efficiency Factor'\n"
+            f"   - status: 'PASS' if efficiency <= 3.0 else 'WARNING' (if <= 5.0) else 'FAIL'\n"
+            f"   - extracted_value: '{efficiency:.2f}x Hype Factor'\n"
+            "   - threshold_applied: '≤ 3.0x'\n"
+            "   - details: Audit how efficiently capital is deployed relative to scaling momentum.\n\n"
+            
+            "3. Growth Velocity Grading:\n"
+            "   - rule_name: 'Growth Velocity Grading'\n"
+            "   - status: Review year-over-year growth. Mark 'PASS' if top-quartile market velocity, else 'WARNING'.\n"
+            "   - extracted_value: E.g., '85% YoY ARR growth'\n"
+            "   - threshold_applied: 'Institutional SaaS Benchmark targets'\n"
+            "   - details: Provide a context breakdown matching industry multiples.\n\n"
+            
+            "AGGREGATION REGIC:\n"
+            "- Set overall_status to 'BLOCKED' if any rule fails (FAIL).\n"
+            "- Set overall_status to 'REVIEW_REQUIRED' if there are warnings (WARNING) but no failures.\n"
+            "- Set overall_status to 'APPROVED' if all rules pass (PASS).\n"
+            "- Set company_name exactly as provided.\n"
+            "- Compute passed_count, warning_count, and failed_count accurately."
+        )
+        
+        prompt = f"Extracted Deal Profile Data Package:\n\n{json.dumps(deal_data, indent=2)}"
+
+        report = self.structured_llm.invoke([
+            ("system", system_instructions),
+            ("user", prompt)
+        ])
+
+        # Overwrite to lock down deterministic math integrity overrides
+        report.company_name = company_name
+        
+        return report
