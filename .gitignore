@@ -2,3 +2,5 @@
 Cartwise/__pycache__/
 Cartwise/.streamlit/secrets.toml
 *.pyc
+*.env
+vc_deal_review_pipeline/src/vc_deal_review/.cache/
