@@ -2,125 +2,74 @@
 from typing import Any, List
 import json
 from vc_deal_review.agents.base_agent import BaseAgent
-from vc_deal_review.schema.synthesis import SynthesisReport
+from vc_deal_review.schema.synthesis import SynthesisRoutingPayload
+
 
 class SynthesizerAgent(BaseAgent):
     """
     Coordinates final multi-agent payload collation, handles conditional 
-    routing based on institutional thresholds, and leverages Claude to
-    synthesize multi-agent findings into high-density memo drafts.
+    routing based on institutional thresholds, and outputs a structured
+    routing payload mapping exception flags.
     """
     def __init__(self):
-        # Initialize BaseAgent to inherit centralized model settings and self.llm
+        # Setting temperature to 0.0 for strict deterministic rule evaluation
         super().__init__(temperature=0.0)
+        self.structured_llm = self.llm.with_structured_output(SynthesisRoutingPayload)
 
-    def evaluate_and_route(
-        self, 
-        compliance_report: Any, 
-        financial_report: Any, 
-        risk_report: Any
-    ) -> SynthesisReport:
-        """
-        Aggregates upstream multi-agent reports, evaluates deterministic 
-        escalation triggers, and invokes Claude to generate a sophisticated narrative draft.
-        """
-        escalation_reasons: List[str] = []
-
-        # 1. Evaluate Deterministic Gating Rules
-        if compliance_report.overall_status != "APPROVED":
-            escalation_reasons.append(
-                f"Compliance Mandate Violation: Overall status is '{compliance_report.overall_status}'"
-            )
-
-        if financial_report.overall_status != "APPROVED":
-            escalation_reasons.append(
-                f"Financial Performance Deficit: Overall status is '{financial_report.overall_status}'"
-            )
-
-        if risk_report.highest_severity_score >= 7:
-            escalation_reasons.append(
-                f"Critical Risk Threat: Max Flagged Severity hits {risk_report.highest_severity_score}/10"
-            )
-        
-        if risk_report.calculated_runway_months < 12.0:
-            escalation_reasons.append(
-                f"Capital Runway Alert: Verified operational runway is low ({risk_report.calculated_runway_months:.1f} Months)"
-            )
-
-        # 2. Assign Routing Pathway Block
-        escalation_required = len(escalation_reasons) > 0
-        routing_destination = "HUMAN_REVIEW" if escalation_required else "COMPLETE"
-
-        # 3. Formulate Preliminary Deal Stance
-        if compliance_report.overall_status == "BLOCKED" or risk_report.highest_severity_score >= 9:
-            suggested_rec = "REJECT"
-        elif escalation_required:
-            suggested_rec = "CONDITIONAL_PROCEED"
-        else:
-            suggested_rec = "PROCEED"
-
-        # 4. Invoke Claude via self.llm to Synthesize a High-Density Executive Narrative
-        summary_draft = self._generate_llm_executive_thesis(
-            compliance_report=compliance_report,
-            financial_report=financial_report,
-            risk_report=risk_report,
-            suggested_rec=suggested_rec
-        )
-
-        return SynthesisReport(
-            escalation_required=escalation_required,
-            triggered_reasons=escalation_reasons,
-            routing_destination=routing_destination,
-            executive_summary_draft=summary_draft,
-            suggested_recommendation=suggested_rec
-        )
-
-    def _generate_llm_executive_thesis(
-        self, 
-        compliance_report: Any, 
-        financial_report: Any, 
-        risk_report: Any, 
-        suggested_rec: str
-    ) -> str:
-        """
-        Leverages Claude to synthesize raw agent parameters into a professional, 
-        clinical, high-density venture capital thesis statement.
-        """
-        # Format a highly structured data payload context for the LLM
+    def evaluate_and_route(self, compliance: Any, financial: Any, risk: Any) -> SynthesisRoutingPayload:
+        # 1. Package upstream reports into a single unified JSON context payload
         context_payload = {
-            "preliminary_recommendation": suggested_rec,
-            "compliance_findings": [f"{f.rule_name}: {f.status} ({f.details})" for f in compliance_report.findings],
-            "financial_findings": [f"{f.rule_name}: {f.status} ({f.details})" for f in financial_report.findings],
-            "financial_sanity_audit": financial_report.projections_sanity_check,
-            "risk_findings": [f"{f.rule_name}: {f.status} ({f.details})" for f in risk_report.findings],
-            "calculated_runway_months": risk_report.calculated_runway_months,
-            "max_flagged_severity": risk_report.highest_severity_score
+            "compliance_track": {
+                "overall_status": getattr(compliance, "overall_status", "UNKNOWN"),
+                "findings": [f.model_dump() if hasattr(f, "model_dump") else str(f) for f in getattr(compliance, "findings", [])]
+            },
+            "financial_track": {
+                "overall_status": getattr(financial, "overall_status", "UNKNOWN"),
+                "findings": [f.model_dump() if hasattr(f, "model_dump") else str(f) for f in getattr(financial, "findings", [])],
+                "projections_sanity_check": getattr(financial, "projections_sanity_check", "")
+            },
+            "risk_track": {
+                "overall_status": getattr(risk, "overall_status", "UNKNOWN"),
+                "calculated_runway_months": getattr(risk, "calculated_runway_months", None),
+                "highest_severity_score": getattr(risk, "highest_severity_score", 0),
+                "findings": [f.model_dump() if hasattr(f, "model_dump") else str(f) for f in getattr(risk, "findings", [])]
+            }
         }
 
-        prompt = (
-            "You are a Chief Investment Officer synthesizing specialized multi-agent diligence feeds "
-            "into a high-density, institutional executive memo draft.\n\n"
-            "Review the raw multi-agent findings data below:\n"
-            f"{json.dumps(context_payload, indent=2)}\n\n"
-            "Generate a crisp, multi-paragraph Investment Thesis and Executive Summary. "
-            "Adhere to these strict guidelines:\n"
-            "- Tone must be clinical, precise, and completely devoid of generic corporate fluff or promotional language.\n"
-            "- Explicitly contrast operational strengths against any critical failure flags or structural friction points.\n"
-            "- Incorporate raw data markers directly (e.g., specify exact severity scores, runway timelines, or model anomalies).\n"
-            "- Conclude with a clear perspective on the viability of the current deal package based on the facts provided.\n"
-            "Output your text directly without introductory conversational fillers."
-        )
+        # 2. Define the strict evaluation system boundaries
+        system_instructions = """
+        You are an Institutional Investment Risk Committee Synthesizer. 
+        Your sole job is to ingest multi-agent diligence feeds and flag threshold exceptions.
 
-        try:
-            # Execute the synchronous prompt string call directly against self.llm
-            response = self.llm.invoke(prompt)
-            return str(response.content).strip()
-        except Exception as e:
-            # Safe operational fallback if connection or model exceptions occur
-            return (
-                f"System Fallback Executive Thesis [Stance: {suggested_rec}]: "
-                f"Compliance status verified as '{compliance_report.overall_status}'. "
-                f"Financial evaluations tracked as '{financial_report.overall_status}'. "
-                f"Risk models indicate an operational cash runway of {risk_report.calculated_runway_months:.1f} months "
-                f"with a maximum individual category risk exposure ceiling of {risk_report.highest_severity_score}/10."
-            )
+        CRITERIA FOR ESCALATION:
+        1. Compliance Status is BLOCKED or REVIEW_REQUIRED.
+        2. Financial Status is BLOCKED or calculated operational runway is under 12 months.
+        3. Risk Quantifier identifies any individual risk severity score >= 7/10.
+
+        Your output must perfectly populate the SynthesisRoutingPayload schema. 
+        Do not generate narrative summaries, prose, or introductions. 
+        Focus entirely on calculating the logical criteria, setting 'escalation_needed', determining 'routing_destination', 
+        and extracting the precise text reasons for exception flags.
+        """
+        
+        # 3. Inject the compiled track data into the user message prompt
+        user_prompt = f"""
+        Please evaluate the following multi-agent intelligence payload:
+        
+        ```json
+        {json.dumps(context_payload, indent=2)}
+        ```
+        """
+
+        # 4. Invoke the structured model contract
+        report = self.structured_llm.invoke([
+            ("system", system_instructions),
+            ("user", user_prompt)
+        ])
+
+        # 5. Inject the raw string version of the context payload into the schema object 
+        # so the downstream ReportGeneratorAgent receives the full context automatically.
+        if hasattr(report, "raw_evaluation_summary"):
+            report.raw_evaluation_summary = json.dumps(context_payload, indent=2)
+
+        return report

@@ -298,7 +298,7 @@ if trigger_analysis:
 # -------------------------------------------------------------
 # This intercepts the execution request top-level before horizontal grid layouts render
 if "pipeline_stage" in strl.session_state \
-    and strl.session_state["pipeline_stage"] in ["PARALLEL_EXECUTION", "SYNTHESIZE"]:
+    and strl.session_state["pipeline_stage"] in ["PARALLEL_EXECUTION", "SYNTHESIZE", "GENERATING_REPORT"]:
     current_stage = strl.session_state["pipeline_stage"]
     deal_dict = strl.session_state["active_deal_data"]
 
@@ -445,9 +445,9 @@ if "pipeline_stage" in strl.session_state \
         strl.session_state["pipeline_stage"] = "SYNTHESIZE"
         strl.rerun()
 
-    # STATE STEP 4: ROUTING EVALUATION
+    # STATE STEP 4: ROUTING EVALUATION (Pure Gatekeeper Logic)
     elif current_stage == "SYNTHESIZE":
-        draw_progress_screen(4, "Synthesizing multi-agent findings into structured memo drafts...")
+        draw_progress_screen(4, "Evaluating institutional thresholds and exception parameters...")
         
         from vc_deal_review.agents.synthesizer_agent import SynthesizerAgent
         
@@ -460,16 +460,50 @@ if "pipeline_stage" in strl.session_state \
         synthesis_result = synthesizer.evaluate_and_route(comp_report, fin_report, risk_report)
         
         strl.session_state["synthesis_report"] = synthesis_result
-        strl.session_state["edited_memo"] = {
-            "executive_summary": synthesis_result.executive_summary_draft,
-            "remediation_notes": ""
-        }
     
-        # Dynamically branch destination based on rule evaluation
-        strl.session_state["analysis_triggered"] = True
-        strl.session_state["pipeline_stage"] = strl.session_state["synthesis_report"].routing_destination  
+        # Branch architecture based on evaluation
+        if synthesis_result.escalation_needed:
+            strl.session_state["edited_memo"] = {
+                "executive_summary": "Drafting investment thesis details based on multi-agent feeds... Reviewer adjustments can be entered here.",
+                "remediation_notes": "Enter mandated mitigations or closing conditions here..."
+            }    
+            strl.session_state["analysis_triggered"] = True
+            strl.session_state["pipeline_stage"] = "HUMAN_REVIEW"  # Drops down into interactive dashboard tabs
+        else:
+            strl.session_state["pipeline_stage"] = "GENERATING_REPORT" # Keeps running in background loop
         strl.rerun()
 
+    # NEW STATE STEP 5: AUTOMATED NARRATIVE GENERATION (Bypassed Escalation Path)
+    elif current_stage == "GENERATING_REPORT":
+        draw_progress_screen(4, "Bypassing escalation. Chief Investment Officer compiling final memorandum narrative...")
+        
+        from vc_deal_review.agents.report_generator_agent import ReportGeneratorAgent
+        
+        comp_report = strl.session_state["compliance_report"]
+        fin_report = strl.session_state["financial_report"]
+        risk_report = strl.session_state["risk_report"]
+        synthesis_result = strl.session_state["synthesis_report"]
+        
+        # Fire the writer agent with zero human modifications
+        generator = ReportGeneratorAgent()
+        final_memo = generator.generate_final_memo(
+            routing_payload=synthesis_result,
+            comp=comp_report,
+            fin=fin_report,
+            risk=risk_report,
+            human_notes=""
+        )
+        
+        # Save narrative strings into layout state structures
+        strl.session_state["edited_memo"] = {
+            "executive_summary": final_memo.executive_summary_draft,
+            "remediation_notes": "\n".join(final_memo.closing_conditions) if final_memo.closing_conditions else ""
+        }
+        
+        strl.session_state["synthesis_report"].suggested_recommendation = "PROCEED (AUTOMATED PASS)"
+        strl.session_state["analysis_triggered"] = True
+        strl.session_state["pipeline_stage"] = "COMPLETE"
+        strl.rerun()
 
 
 # -------------------------------------------------------------
@@ -648,15 +682,50 @@ elif "active_deal_data" in strl.session_state:
                         
                     strl.markdown("#### Select Final Authorization Stance:")
                     col_b1, col_b2 = strl.columns(2)
+                    
                     with col_b1:
                         if strl.button("💚 Approve Escalation & Proceed", type="primary", use_container_width=True):
-                            strl.session_state["synthesis_report"].suggested_recommendation = "PROCEED (AUTHORIZED OVERRIDE)"
-                            strl.session_state["pipeline_stage"] = "COMPLETE"
-                            strl.success("Diligence authorization committed successfully!")
-                            strl.rerun()
+                            with strl.spinner("Incorporate override contexts and rewriting final report..."):
+                                from vc_deal_review.agents.report_generator_agent import ReportGeneratorAgent
+                                
+                                # Gather the live state inputs edited by the user in the text areas below
+                                memo_data = strl.session_state.get("edited_memo", {})
+                                text_thesis = memo_data.get("executive_summary", "")
+                                text_remediations = memo_data.get("remediation_notes", "")
+                                
+                                compiled_notes = (
+                                    f"Authorized Exception. User override edits applied to thesis content: '{text_thesis}'. "
+                                    f"Mandated mitigations added: '{text_remediations}'."
+                                )
+                                
+                                # Run generation pass using the collected notes
+                                generator = ReportGeneratorAgent()
+                                final_memo = generator.generate_final_memo(
+                                    routing_payload=strl.session_state["synthesis_report"],
+                                    comp=strl.session_state["compliance_report"],
+                                    fin=strl.session_state["financial_report"],
+                                    risk=strl.session_state["risk_report"],
+                                    human_notes=compiled_notes
+                                )
+                                
+                                # Re-commit structural updates back to state
+                                strl.session_state["edited_memo"] = {
+                                    "executive_summary": final_memo.executive_summary_draft,
+                                    "remediation_notes": f"COMMITTEE OVERRIDE MIGRATIONS:\n" + "\n".join(final_memo.closing_conditions)
+                                }
+                                
+                                strl.session_state["final_deal_stance"] = "PROCEED (AUTHORIZED OVERRIDE)"
+                                strl.session_state["pipeline_stage"] = "COMPLETE"
+                                strl.success("Diligence authorization committed successfully!")
+                                strl.rerun()
                     with col_b2:
                         if strl.button("🛑 Decline / Strategic Hold", type="secondary", use_container_width=True):
-                            strl.session_state["synthesis_report"].suggested_recommendation = "REJECTED / STRATEGIC_HOLD"
+                            strl.session_state["edited_memo"] = {
+                                "executive_summary": "Deal evaluation terminated by Investment Committee review. Strategic Hold mandated due to identified exception parameters.",
+                                "remediation_notes": "ARCHIVED ON COMMITTE REVIEW: Deal stance finalized as REJECTED / STRATEGIC_HOLD."
+                            }
+                           
+                            strl.session_state["final_deal_stance"] = "REJECTED / STRATEGIC_HOLD"                            
                             strl.session_state["pipeline_stage"] = "COMPLETE"
                             strl.error("Deal closure committed to historical audit records.")
                             strl.rerun()
@@ -669,7 +738,7 @@ elif "active_deal_data" in strl.session_state:
                     user_remediation = strl.text_area("Diligence Mitigations / Closing Comments", value=strl.session_state["edited_memo"]["remediation_notes"], placeholder="Provide executive commentary...", height=120)
                     strl.session_state["edited_memo"]["remediation_notes"] = user_remediation
                 else:
-                    final_rec = synth.suggested_recommendation
+                    final_rec = strl.session_state.get("final_deal_stance", "PROCEED")
                     banner_style = "background-color: #ecfdf5; border-left: 5px solid #10b981; color: #065f46;" if "PROCEED" in final_rec else "background-color: #fef2f2; border-left: 5px solid #ef4444; color: #991b1b;"
                     title_text = "✅ LOCKED INVESTMENT COMMITTEE MEMORANDUM" if "PROCEED" in final_rec else "🛑 ARCHIVED AUDIT TRAIL REJECTION RECORD"
                         
