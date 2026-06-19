@@ -802,91 +802,29 @@ elif "active_deal_data" in strl.session_state:
             else:
                 strl.info("Trigger 'Execute Intelligence Run' above to run the ReAct risk loop tracker.")
 
-        # --- SUB-TAB 2: COMPLIANCE ---
-        with sub_tab2:
-            strl.markdown("<br>", unsafe_allow_html=True)
-            if "compliance_report" in strl.session_state:
-                report = strl.session_state["compliance_report"]
-                color_hex = {"APPROVED": "#22c55e", "REVIEW_REQUIRED": "#f97316", "BLOCKED": "#ef4444"}
-                stance_color = color_hex.get(report.overall_status, "#64748b")
-                
-                strl.markdown(f'<div style="background-color: {stance_color}10; border-left: 4px solid {stance_color}; padding: 12px; border-radius: 4px; margin-bottom: 1.5rem; font-size: 14px;"><b>Policy Status:</b> {report.overall_status}</div>', unsafe_allow_html=True)
-                for finding in report.findings:
-                    f_icon = "✅" if finding.status == "PASS" else ("⚠️" if finding.status == "WARNING" else "🛑")
-                    col_f1, col_f2 = strl.columns([0.25, 0.75])
-                    col_f1.markdown(f"<div class='report-finding-header'>{f_icon} {finding.rule_name}</div>", unsafe_allow_html=True)
-                    col_f2.markdown(f"<div class='report-finding-details'><i>{finding.details}</i></div><div class='report-finding-meta'>Extracted: {finding.extracted_value} | Required: {finding.threshold_applied}</div>", unsafe_allow_html=True)
-            else:
-                strl.info("Trigger 'Execute Intelligence Run' above to activate analysis tracks.")
-
-        # --- SUB-TAB 3: FINANCIALS ---
-        with sub_tab3:
-            strl.markdown("<br>", unsafe_allow_html=True)
-            if "financial_report" in strl.session_state:
-                fin_report = strl.session_state["financial_report"]
-                color_hex = {"APPROVED": "#22c55e", "REVIEW_REQUIRED": "#f97316", "BLOCKED": "#ef4444"}
-                stance_color = color_hex.get(fin_report.overall_status, "#64748b")
-                
-                strl.markdown(f'<div style="background-color: {stance_color}10; border-left: 4px solid {stance_color}; padding: 12px; border-radius: 4px; margin-bottom: 1.5rem; font-size: 14px;"><b>Financial Profile Stance:</b> {fin_report.overall_status}</div>', unsafe_allow_html=True)
-                for finding in fin_report.findings:
-                    f_icon = "✅" if finding.status == "PASS" else ("⚠️" if finding.status == "WARNING" else "🛑")
-                    col_f1, col_f2 = strl.columns([0.25, 0.75])
-                    col_f1.markdown(f"<div class='report-finding-header'>{f_icon} {finding.rule_name}</div>", unsafe_allow_html=True)
-                    col_f2.markdown(f"<div class='report-finding-details'><i>{finding.details}</i></div><div class='report-finding-meta'>Extracted: {finding.extracted_value} | Benchmark Target: {finding.threshold_applied}</div>", unsafe_allow_html=True)
-                
-                strl.markdown("<div style='margin-top: 1.5rem;'></div>", unsafe_allow_html=True)
-                strl.markdown("#### 🔍 Forward Model Sanity Audit")
-                strl.info(fin_report.projections_sanity_check)
-            else:
-                strl.info("Trigger 'Execute Intelligence Run' above to evaluate financial track performance mechanics.")
-
-        # --- SUB-TAB 4: RISK ---
-        with sub_tab4:
-            strl.markdown("<br>", unsafe_allow_html=True)
-            if "risk_report" in strl.session_state:
-                risk_report = strl.session_state["risk_report"]
-                color_hex = {"APPROVED": "#22c55e", "REVIEW_REQUIRED": "#f97316", "BLOCKED": "#ef4444"}
-                stance_color = color_hex.get(risk_report.overall_status, "#64748b")
-                
-                strl.markdown(
-                    f"""
-                    <div style="display: flex; gap: 1rem; margin-bottom: 1.5rem;">
-                        <div style="flex: 1; background-color: {stance_color}10; border-left: 4px solid {stance_color}; padding: 12px; border-radius: 4px; font-size: 14px;"><b>Risk Exposure Tier:</b> {risk_report.overall_status}</div>
-                        <div style="flex: 1; background-color: #f1f5f9; border-left: 4px solid #475569; padding: 12px; border-radius: 4px; font-size: 14px;"><b>Verified Operational Runway:</b> {risk_report.calculated_runway_months:.1f} Months</div>
-                        <div style="flex: 1; background-color: #fef2f2; border-left: 4px solid #ef4444; padding: 12px; border-radius: 4px; font-size: 14px;"><b>Max Flagged Severity:</b> {risk_report.highest_severity_score} / 10</div>
-                    </div>
-                    """, unsafe_allow_html=True
-                )
-                for finding in risk_report.findings:
-                    f_icon = "✅" if finding.status == "PASS" else ("⚠️" if finding.status == "WARNING" else "🛑")
-                    col_f1, col_f2 = strl.columns([0.25, 0.75])
-                    col_f1.markdown(f"<div class='report-finding-header'>{f_icon} {finding.rule_name}</div>", unsafe_allow_html=True)
-                    col_f2.markdown(f"<div class='report-finding-details'>{finding.details}</div><div class='report-finding-meta'>Calculated Metric: {finding.extracted_value} | Threshold Constraint: {finding.threshold_applied}</div>", unsafe_allow_html=True)
-            else:
-                strl.info("Trigger 'Execute Intelligence Run' above to run the ReAct risk loop tracker.")
-
+    
     # # -------------------------------------------------------------
     # DYNAMIC MAIN WORKSPACE TAB FOCUS CONTROL
     # -------------------------------------------------------------
     has_run = strl.session_state.get("analysis_triggered", False)
 
-    # Shift focus by dynamically making the Analysis Report the first tab element once ready
     if has_run:
-        main_tab1, main_tab2 = strl.tabs(["📝 Analysis Report", "📊 Extracted Profile"])
-        
-        # Scope definitions to matching index targets
+        main_tab1, main_tab2 = strl.tabs(
+            ["📝 Analysis Report", "📊 Extracted Profile"],
+            key="tabs_post_run"
+        )
         with main_tab1:
             render_analysis_report_workspace()
         with main_tab2:
             render_extracted_profile_workspace(financial_html, structural_html)
     else:
-        main_tab1, main_tab2 = strl.tabs(["📊 Extracted Profile", "📝 Analysis Report"])
-        
+        main_tab1 = strl.tabs(
+            ["📊 Extracted Profile"],
+            key="tabs_pre_run"
+        )[0]
         with main_tab1:
             render_extracted_profile_workspace(financial_html, structural_html)
-        with main_tab2:
-            render_analysis_report_workspace()
-    
+
     
     strl.markdown("<br>", unsafe_allow_html=True)
     with strl.expander("🔍 View Raw Validated Schema JSON"):
